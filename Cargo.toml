@@ -1,0 +1,5 @@
+[workspace]
+members = [
+    "system-configuration-sys",
+    "system-configuration",
+]
