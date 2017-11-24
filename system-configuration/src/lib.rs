@@ -1,7 +1,6 @@
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
-    }
-}
+#[macro_use]
+extern crate core_foundation;
+extern crate core_foundation_sys;
+extern crate system_configuration_sys;
+
+pub mod dynamic_store;
