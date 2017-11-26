@@ -8,10 +8,10 @@
 
 use core_foundation::base::TCFType;
 use core_foundation::boolean::CFBoolean;
-use core_foundation::dictionary::{CFDictionary, CFDictionaryRef};
+use core_foundation::dictionary::CFDictionary;
+use core_foundation::propertylist::{CFPropertyList, CFPropertyListSubClass};
 use core_foundation::string::CFString;
 use core_foundation_sys::base::{CFRelease, kCFAllocatorDefault};
-use core_foundation_sys::propertylist::CFPropertyListRef;
 
 use system_configuration_sys::dynamic_store::*;
 
@@ -70,15 +70,15 @@ impl SCDynamicStore {
     }
 
     /// If the given key exists in the store, the associated value is returned.
-    pub fn get<S: Into<CFString>>(&self, key: S) -> Option<CFDictionary> {
+    ///
+    /// Use `CFPropertyList::downcast` to cast the result into the correct type.
+    pub fn get<S: Into<CFString>>(&self, key: S) -> Option<CFPropertyList> {
         let cf_key = key.into();
         unsafe {
             let dict_ref =
                 SCDynamicStoreCopyValue(self.as_concrete_TypeRef(), cf_key.as_concrete_TypeRef());
             if dict_ref != ptr::null() {
-                Some(CFDictionary::wrap_under_create_rule(
-                    dict_ref as *const _ as CFDictionaryRef,
-                ))
+                Some(CFPropertyList::wrap_under_create_rule(dict_ref))
             } else {
                 None
             }
@@ -87,13 +87,23 @@ impl SCDynamicStore {
 
     /// Sets the value of the given key. Overwrites existing values.
     /// Returns `true` on success, false on failure.
-    pub fn set<S: Into<CFString>>(&self, key: S, value: &CFDictionary) -> bool {
+    pub fn set<S: Into<CFString>, R, V: CFPropertyListSubClass<R>>(
+        &self,
+        key: S,
+        value: &V,
+    ) -> bool {
+        self.set_raw(key, &value.to_CFPropertyList())
+    }
+
+    /// Sets the value of the given key. Overwrites existing values.
+    /// Returns `true` on success, false on failure.
+    pub fn set_raw<S: Into<CFString>>(&self, key: S, value: &CFPropertyList) -> bool {
         let cf_key = key.into();
         let success = unsafe {
             SCDynamicStoreSetValue(
                 self.as_concrete_TypeRef(),
                 cf_key.as_concrete_TypeRef(),
-                value.as_concrete_TypeRef() as CFPropertyListRef,
+                value.as_concrete_TypeRef(),
             )
         };
         success != 0

@@ -18,7 +18,9 @@ fn main() {
 
         let ipv4_dict = store
             .get("State:/Network/Global/IPv4")
-            .expect("Unable to find global settings");
+            .expect("Unable to find global settings")
+            .downcast::<_, CFDictionary>()
+            .expect("Global IPv4 settings not a dictionary");
         println!("Got IPv4 global property list");
 
         let pri_service_id_ptr = ipv4_dict
