@@ -9,7 +9,7 @@ repository = "https://github.com/mullvad/system-configuration-rs"
 license = "MIT/Apache-2.0"
 
 [dependencies]
-core-foundation = { git = "https://github.com/servo/core-foundation-rs", version = "0.4.4" }
-core-foundation-sys = { git = "https://github.com/servo/core-foundation-rs", version = "0.4.4" }
+core-foundation = { git = "https://github.com/servo/core-foundation-rs", version = "0.4.5" }
+core-foundation-sys = { git = "https://github.com/servo/core-foundation-rs", version = "0.4.5" }
 
 system-configuration-sys = { path = "../system-configuration-sys" }
