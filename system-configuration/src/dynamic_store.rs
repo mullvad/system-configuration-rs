@@ -6,18 +6,137 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
+use core_foundation::array::{CFArray, CFArrayRef};
 use core_foundation::base::TCFType;
 use core_foundation::boolean::CFBoolean;
 use core_foundation::dictionary::CFDictionary;
 use core_foundation::propertylist::{CFPropertyList, CFPropertyListSubClass};
+use core_foundation::runloop::CFRunLoopSource;
 use core_foundation::string::CFString;
 use core_foundation_sys::base::{CFRelease, kCFAllocatorDefault};
 
-use system_configuration_sys::dynamic_store::*;
+pub use system_configuration_sys::dynamic_store::*;
 
+use std::os::raw::c_void;
 use std::ptr;
 
+/// Struct describing the callback happening when a watched value in the dynamic store is changed.
+pub struct SCDynamicStoreCallBackContext<T> {
+    /// The callback function that will be called when a watched value in the dynamic store is
+    /// changed.
+    pub callout: SCDynamicStoreCallBackT<T>,
+
+    /// The argument passed to each `callout` call. Can be used to keep state between
+    /// callbacks.
+    pub info: T,
+}
+
+/// Signature for callback functions getting called when a watched value in the dynamic store is
+/// changed.
+///
+/// This is the safe callback definition, abstracting over the lower level `SCDynamicStoreCallBack`
+/// from the `system-configuration-sys` crate.
+pub type SCDynamicStoreCallBackT<T> = fn(
+    store: SCDynamicStore,
+    changed_keys: CFArray<CFString>,
+    info: &mut T,
+);
+
+/// Builder for [`SCDynamicStore`] sessions.
+///
+/// [`SCDynamicStore`]: struct.SCDynamicStore.html
+pub struct SCDynamicStoreBuilder<T> {
+    name: CFString,
+    session_keys: bool,
+    callback_context: Option<SCDynamicStoreCallBackContext<T>>,
+}
+
+impl SCDynamicStoreBuilder<()> {
+    /// Creates a new builder. `name` is used as the name parameter when creating the
+    /// [`SCDynamicStore`] session.
+    ///
+    /// [`SCDynamicStore`]: struct.SCDynamicStore.html
+    pub fn new<S: Into<CFString>>(name: S) -> Self {
+        SCDynamicStoreBuilder {
+            name: name.into(),
+            session_keys: false,
+            callback_context: None,
+        }
+    }
+}
+
+impl<T> SCDynamicStoreBuilder<T> {
+    /// Set wether or not the created [`SCDynamicStore`] should have session keys or not.
+    /// See [`SCDynamicStoreCreateWithOptions`] for details.
+    ///
+    /// Defaults to `false`.
+    ///
+    /// [`SCDynamicStore`]: struct.SCDynamicStore.html
+    /// [`SCDynamicStoreCreateWithOptions`]: https://developer.apple.com/documentation/systemconfiguration/1437818-scdynamicstorecreatewithoptions?language=objc
+    pub fn session_keys(mut self, session_keys: bool) -> Self {
+        self.session_keys = session_keys;
+        self
+    }
+
+    /// Set a callback context (callback function and data to pass to each callback call).
+    ///
+    /// Defaults to having callbacks disabled.
+    pub fn callback_context<T2>(
+        self,
+        callback_context: SCDynamicStoreCallBackContext<T2>,
+    ) -> SCDynamicStoreBuilder<T2> {
+        SCDynamicStoreBuilder {
+            name: self.name,
+            session_keys: self.session_keys,
+            callback_context: Some(callback_context),
+        }
+    }
+
+    /// Create the dynamic store session.
+    pub fn build(mut self) -> SCDynamicStore {
+        let store_options = self.create_store_options();
+        if let Some(callback_context) = self.callback_context.take() {
+            SCDynamicStore::create(
+                &self.name,
+                &store_options,
+                Some(convert_callback::<T>),
+                &mut self.create_context(callback_context),
+            )
+        } else {
+            SCDynamicStore::create(&self.name, &store_options, None, ptr::null_mut())
+        }
+    }
+
+    fn create_store_options(&self) -> CFDictionary {
+        let key = unsafe { CFString::wrap_under_create_rule(kSCDynamicStoreUseSessionKeys) };
+        let value = CFBoolean::from(self.session_keys);
+        CFDictionary::from_CFType_pairs(&[(key, value)])
+    }
+
+    fn create_context(
+        &self,
+        callback_context: SCDynamicStoreCallBackContext<T>,
+    ) -> SCDynamicStoreContext {
+        // move the callback context struct to the heap and "forget" it.
+        // It will later be brought back into the Rust typesystem and freed in
+        // `release_callback_context`
+        let info_ptr = Box::into_raw(Box::new(callback_context));
+
+        SCDynamicStoreContext {
+            version: 0,
+            info: info_ptr as *mut _ as *mut c_void,
+            retain: None,
+            release: Some(release_callback_context::<T>),
+            copyDescription: None,
+        }
+    }
+}
+
 /// Access to the key-value pairs in the dynamic store of a running system.
+///
+/// Use the [`SCDynamicStoreBuilder`] to create instances of this.
+///
+/// [`SCDynamicStoreBuilder`]: struct.SCDynamicStoreBuilder.html
 pub struct SCDynamicStore(SCDynamicStoreRef);
 
 impl Drop for SCDynamicStore {
@@ -31,39 +150,19 @@ impl_TCFType!(SCDynamicStore, SCDynamicStoreRef, SCDynamicStoreGetTypeID);
 impl SCDynamicStore {
     /// Creates a new session used to interact with the dynamic store maintained by the System
     /// Configuration server.
-    pub fn create<S: Into<CFString>>(name: S) -> Self {
-        let cf_name = name.into();
+    fn create(
+        name: &CFString,
+        store_options: &CFDictionary,
+        callout: SCDynamicStoreCallBack,
+        context: *mut SCDynamicStoreContext,
+    ) -> Self {
         unsafe {
-            let store = SCDynamicStoreCreate(
-                kCFAllocatorDefault,
-                cf_name.as_concrete_TypeRef(),
-                None,
-                ptr::null_mut(),
-            );
-            SCDynamicStore::wrap_under_create_rule(store)
-        }
-    }
-
-    /// Creates a new session used to interact with the dynamic store maintained by the System
-    /// Configuration server. Uses [`SCDynamicStoreCreateWithOptions`] underneath and sets
-    /// `kSCDynamicStoreUseSessionKeys` to true.
-    ///
-    /// [`SCDynamicStoreCreateWithOptions`]: https://developer.apple.com/documentation/systemconfiguration/1437818-scdynamicstorecreatewithoptions?language=objc
-    pub fn create_with_session_keys<S: Into<CFString>>(name: S) -> Self {
-        let cf_name = name.into();
-        unsafe {
-            let store_options = CFDictionary::from_CFType_pairs(&[
-                (
-                    CFString::wrap_under_create_rule(kSCDynamicStoreUseSessionKeys),
-                    CFBoolean::true_value(),
-                ),
-            ]);
             let store = SCDynamicStoreCreateWithOptions(
                 kCFAllocatorDefault,
-                cf_name.as_concrete_TypeRef(),
+                name.as_concrete_TypeRef(),
                 store_options.as_concrete_TypeRef(),
-                None,
-                ptr::null_mut(),
+                callout,
+                context,
             );
             SCDynamicStore::wrap_under_create_rule(store)
         }
@@ -108,4 +207,53 @@ impl SCDynamicStore {
         };
         success != 0
     }
+
+    /// Specifies a set of keys and key patterns that should be monitored for changes.
+    pub fn set_notification_keys<T1, T2>(
+        &self,
+        keys: &CFArray<T1>,
+        patterns: &CFArray<T2>,
+    ) -> bool {
+        let success = unsafe {
+            SCDynamicStoreSetNotificationKeys(
+                self.as_concrete_TypeRef(),
+                keys.as_concrete_TypeRef(),
+                patterns.as_concrete_TypeRef(),
+            )
+        };
+        success != 0
+    }
+
+    /// Creates a run loop source object that can be added to the application's run loop.
+    pub fn create_run_loop_source(&self) -> CFRunLoopSource {
+        unsafe {
+            let run_loop_source_ref = SCDynamicStoreCreateRunLoopSource(
+                kCFAllocatorDefault,
+                self.as_concrete_TypeRef(),
+                0,
+            );
+            CFRunLoopSource::wrap_under_create_rule(run_loop_source_ref)
+        }
+    }
+}
+
+
+/// The raw callback used by the safe `SCDynamicStore` to convert from the `SCDynamicStoreCallBack`
+/// to the `SCDynamicStoreCallBackT`
+unsafe extern "C" fn convert_callback<T>(
+    store_ref: SCDynamicStoreRef,
+    changed_keys_ref: CFArrayRef,
+    context_ptr: *mut c_void,
+) {
+    let store = SCDynamicStore::wrap_under_get_rule(store_ref);
+    let changed_keys = CFArray::<CFString>::wrap_under_get_rule(changed_keys_ref);
+    let context = &mut *(context_ptr as *mut _ as *mut SCDynamicStoreCallBackContext<T>);
+
+    (context.callout)(store, changed_keys, &mut context.info);
+}
+
+// Release function called by core foundation on release of the dynamic store context.
+unsafe extern "C" fn release_callback_context<T>(context_ptr: *const c_void) {
+    // Bring back the context object from raw ptr so it is correctly freed.
+    let _context = Box::from_raw(context_ptr as *mut SCDynamicStoreCallBackContext<T>);
 }
