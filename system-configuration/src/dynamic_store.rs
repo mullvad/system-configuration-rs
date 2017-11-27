@@ -81,7 +81,7 @@ impl<T> SCDynamicStoreBuilder<T> {
     /// Set a callback context (callback function and data to pass to each callback call).
     ///
     /// Defaults to having callbacks disabled.
-    pub fn callback<T2>(
+    pub fn callback_context<T2>(
         self,
         callback_context: SCDynamicStoreCallBackContext<T2>,
     ) -> SCDynamicStoreBuilder<T2> {
@@ -125,7 +125,7 @@ impl<T> SCDynamicStoreBuilder<T> {
         // It will later be brought back into the Rust typesystem and freed in
         // `release_callback_context`
         let info_ptr = Box::into_raw(Box::new(callback_context));
-        
+
         SCDynamicStoreContext {
             version: 0,
             info: info_ptr as *mut _ as *mut c_void,

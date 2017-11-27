@@ -47,7 +47,7 @@ fn main() {
     };
 
     let store = SCDynamicStoreBuilder::new("my-watch-dns-store")
-        .callback(callback_context)
+        .callback_context(callback_context)
         .build();
     println!("Created dynamic store");
 
