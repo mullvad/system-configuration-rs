@@ -9,11 +9,11 @@ use core_foundation::base::TCFType;
 use core_foundation::dictionary::CFDictionary;
 use core_foundation::string::{CFString, CFStringRef};
 
-use system_configuration::dynamic_store::SCDynamicStore;
+use system_configuration::dynamic_store::SCDynamicStoreBuilder;
 
 fn main() {
     unsafe {
-        let store = SCDynamicStore::create("my-test-dyn-store");
+        let store = SCDynamicStoreBuilder::new("my-test-dyn-store").build();
         println!("Created dynamic store");
 
         let ipv4_dict = store
