@@ -208,6 +208,14 @@ impl SCDynamicStore {
         success != 0
     }
 
+    pub fn remove<S: Into<CFString>>(&self, key: S) -> bool {
+        let cf_key = key.into();
+        let success = unsafe {
+            SCDynamicStoreRemoveValue(self.as_concrete_TypeRef(), cf_key.as_concrete_TypeRef())
+        };
+        success != 0
+    }
+
     /// Specifies a set of keys and key patterns that should be monitored for changes.
     pub fn set_notification_keys<T1, T2>(
         &self,
