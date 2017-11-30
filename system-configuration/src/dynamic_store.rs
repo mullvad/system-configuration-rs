@@ -168,6 +168,25 @@ impl SCDynamicStore {
         }
     }
 
+    /// Returns the keys that represent the current dynamic store entries that match the specified
+    /// pattern. Or `None` if an error occured.
+    ///
+    /// `pattern` - A regular expression pattern used to match the dynamic store keys.
+    pub fn get_keys<S: Into<CFString>>(&self, pattern: S) -> Option<CFArray<CFString>> {
+        let cf_pattern = pattern.into();
+        unsafe {
+            let array_ref = SCDynamicStoreCopyKeyList(
+                self.as_concrete_TypeRef(),
+                cf_pattern.as_concrete_TypeRef(),
+            );
+            if array_ref != ptr::null() {
+                Some(CFArray::wrap_under_create_rule(array_ref))
+            } else {
+                None
+            }
+        }
+    }
+
     /// If the given key exists in the store, the associated value is returned.
     ///
     /// Use `CFPropertyList::downcast` to cast the result into the correct type.
