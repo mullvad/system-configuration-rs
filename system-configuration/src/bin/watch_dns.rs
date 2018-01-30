@@ -2,14 +2,11 @@ extern crate system_configuration;
 extern crate system_configuration_sys;
 
 extern crate core_foundation;
-extern crate core_foundation_sys;
-
 
 use core_foundation::array::CFArray;
 use core_foundation::dictionary::CFDictionary;
-use core_foundation::runloop::CFRunLoop;
+use core_foundation::runloop::{CFRunLoop, kCFRunLoopCommonModes};
 use core_foundation::string::CFString;
-use core_foundation_sys::runloop::kCFRunLoopCommonModes;
 
 use system_configuration::dynamic_store::{SCDynamicStore, SCDynamicStoreBuilder,
                                           SCDynamicStoreCallBackContext};
@@ -80,6 +77,6 @@ fn my_callback(store: SCDynamicStore, _changed_keys: CFArray<CFString>, payload:
     let dns_dictionary =
         CFDictionary::from_CFType_pairs(&[(server_addresses_key, server_addresses_value)]);
 
-    let success = store.set(payload.service_path.clone(), &dns_dictionary);
+    let success = store.set(payload.service_path.clone(), dns_dictionary);
     println!("callback: {}", success);
 }
