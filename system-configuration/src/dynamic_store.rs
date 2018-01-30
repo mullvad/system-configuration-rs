@@ -7,13 +7,12 @@
 // except according to those terms.
 
 use core_foundation::array::{CFArray, CFArrayRef};
-use core_foundation::base::TCFType;
+use core_foundation::base::{TCFType, kCFAllocatorDefault};
 use core_foundation::boolean::CFBoolean;
 use core_foundation::dictionary::CFDictionary;
 use core_foundation::propertylist::{CFPropertyList, CFPropertyListSubClass};
 use core_foundation::runloop::CFRunLoopSource;
 use core_foundation::string::CFString;
-use core_foundation_sys::base::{CFRelease, kCFAllocatorDefault};
 
 pub use system_configuration_sys::dynamic_store::*;
 
@@ -36,11 +35,8 @@ pub struct SCDynamicStoreCallBackContext<T> {
 ///
 /// This is the safe callback definition, abstracting over the lower level `SCDynamicStoreCallBack`
 /// from the `system-configuration-sys` crate.
-pub type SCDynamicStoreCallBackT<T> = fn(
-    store: SCDynamicStore,
-    changed_keys: CFArray<CFString>,
-    info: &mut T,
-);
+pub type SCDynamicStoreCallBackT<T> =
+    fn(store: SCDynamicStore, changed_keys: CFArray<CFString>, info: &mut T);
 
 /// Builder for [`SCDynamicStore`] sessions.
 ///
@@ -132,17 +128,13 @@ impl<T> SCDynamicStoreBuilder<T> {
     }
 }
 
-/// Access to the key-value pairs in the dynamic store of a running system.
-///
-/// Use the [`SCDynamicStoreBuilder`] to create instances of this.
-///
-/// [`SCDynamicStoreBuilder`]: struct.SCDynamicStoreBuilder.html
-pub struct SCDynamicStore(SCDynamicStoreRef);
-
-impl Drop for SCDynamicStore {
-    fn drop(&mut self) {
-        unsafe { CFRelease(self.as_CFTypeRef()) }
-    }
+declare_TCFType!{
+    /// Access to the key-value pairs in the dynamic store of a running system.
+    ///
+    /// Use the [`SCDynamicStoreBuilder`] to create instances of this.
+    ///
+    /// [`SCDynamicStoreBuilder`]: struct.SCDynamicStoreBuilder.html
+    SCDynamicStore, SCDynamicStoreRef
 }
 
 impl_TCFType!(SCDynamicStore, SCDynamicStoreRef, SCDynamicStoreGetTypeID);
@@ -189,7 +181,7 @@ impl SCDynamicStore {
 
     /// If the given key exists in the store, the associated value is returned.
     ///
-    /// Use `CFPropertyList::downcast` to cast the result into the correct type.
+    /// Use `CFPropertyList::downcast_into` to cast the result into the correct type.
     pub fn get<S: Into<CFString>>(&self, key: S) -> Option<CFPropertyList> {
         let cf_key = key.into();
         unsafe {
@@ -205,12 +197,8 @@ impl SCDynamicStore {
 
     /// Sets the value of the given key. Overwrites existing values.
     /// Returns `true` on success, false on failure.
-    pub fn set<S: Into<CFString>, R, V: CFPropertyListSubClass<R>>(
-        &self,
-        key: S,
-        value: &V,
-    ) -> bool {
-        self.set_raw(key, &value.to_CFPropertyList())
+    pub fn set<S: Into<CFString>, V: CFPropertyListSubClass>(&self, key: S, value: V) -> bool {
+        self.set_raw(key, &value.into_CFPropertyList())
     }
 
     /// Sets the value of the given key. Overwrites existing values.
@@ -263,7 +251,6 @@ impl SCDynamicStore {
         }
     }
 }
-
 
 /// The raw callback used by the safe `SCDynamicStore` to convert from the `SCDynamicStoreCallBack`
 /// to the `SCDynamicStoreCallBackT`

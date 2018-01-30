@@ -2,7 +2,6 @@ extern crate system_configuration;
 extern crate system_configuration_sys;
 
 extern crate core_foundation;
-extern crate core_foundation_sys;
 
 use core_foundation::array::CFArray;
 use core_foundation::base::TCFType;
@@ -19,7 +18,7 @@ fn main() {
         let ipv4_dict = store
             .get("State:/Network/Global/IPv4")
             .expect("Unable to find global settings")
-            .downcast::<_, CFDictionary>()
+            .downcast_into::<CFDictionary>()
             .expect("Global IPv4 settings not a dictionary");
         println!("Got IPv4 global property list");
 
@@ -40,7 +39,7 @@ fn main() {
         let dns_dictionary =
             CFDictionary::from_CFType_pairs(&[(server_addresses_key, server_addresses_value)]);
 
-        let success = store.set(pri_service_path, &dns_dictionary);
+        let success = store.set(pri_service_path, dns_dictionary);
         println!("success? {}", success);
     }
 }
