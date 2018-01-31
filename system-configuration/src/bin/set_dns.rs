@@ -1,5 +1,4 @@
 extern crate system_configuration;
-extern crate system_configuration_sys;
 
 extern crate core_foundation;
 
