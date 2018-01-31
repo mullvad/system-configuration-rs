@@ -23,6 +23,7 @@ bindgen \
     --whitelist-var "kSCDynamicStore.*" \
     --blacklist-type "(__)?CF.*" \
     --blacklist-type "Boolean" \
+    --blacklist-type "dispatch_queue_[ts]" \
     --raw-line "// Generated using:" \
     --raw-line "// $BINDGEN_VERSION" \
     --raw-line "// macOS SDK $SDK_VERSION." \
@@ -33,6 +34,9 @@ bindgen \
     --raw-line "use core_foundation_sys::dictionary::CFDictionaryRef;" \
     --raw-line "use core_foundation_sys::propertylist::CFPropertyListRef;" \
     --raw-line "use core_foundation_sys::runloop::CFRunLoopSourceRef;" \
+    --raw-line "" \
+    --raw-line "/// This is a temporary solution." \
+    --raw-line "pub type dispatch_queue_t = *mut ::std::os::raw::c_void;" \
     -o $BINDING_PATH \
     $HEADER_PATH -- \
     -I$SDK_PATH/usr/include \

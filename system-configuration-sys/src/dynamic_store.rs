@@ -11,12 +11,9 @@ use core_foundation_sys::propertylist::CFPropertyListRef;
 use core_foundation_sys::runloop::CFRunLoopSourceRef;
 use core_foundation_sys::string::CFStringRef;
 
-pub type dispatch_queue_t = *mut dispatch_queue_s;
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct dispatch_queue_s {
-    pub _address: u8,
-}
+/// This is a temporary solution.
+pub type dispatch_queue_t = *mut ::std::os::raw::c_void;
+
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct __SCDynamicStore {
