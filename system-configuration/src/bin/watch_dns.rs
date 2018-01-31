@@ -31,6 +31,7 @@ fn main() {
         .next()
         .expect("Give service uuid as first argument");
     let service_path = CFString::from(&format!("State:/Network/Service/{}/DNS", service_id)[..]);
+    println!("Watching {}", service_path);
 
     let watch_keys = CFArray::from_CFTypes(&[service_path.clone()]);
     let watch_patterns: CFArray<CFString> = CFArray::from_CFTypes(&[]);
