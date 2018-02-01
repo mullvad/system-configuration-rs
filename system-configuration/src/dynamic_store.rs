@@ -6,6 +6,12 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
+//! Bindings to [`SCDynamicStore`].
+//!
+//! See the examples directory for examples how to use this module.
+//!
+//! [`SCDynamicStore`]: https://developer.apple.com/documentation/systemconfiguration/scdynamicstore?language=objc
+
 use core_foundation::array::{CFArray, CFArrayRef};
 use core_foundation::base::{TCFType, kCFAllocatorDefault};
 use core_foundation::boolean::CFBoolean;
