@@ -2,9 +2,9 @@
 name = "system-configuration"
 version = "0.1.0"
 authors = ["Mullvad VPN <admin@mullvad.net>", "Linus Färnstrand <linus@mullvad.net>", "Andrej Mihajlov <and@mullvad.net>"]
-description = "Bindings to System Configuration framework for macOS"
+description = "Bindings to SystemConfiguration framework for macOS"
 keywords = ["macos", "system", "configuration", "bindings"]
-categories = ["api-bindings", "external-ffi-bindings"]
+categories = ["api-bindings", "os::macos-apis"]
 repository = "https://github.com/mullvad/system-configuration-rs"
 license = "MIT/Apache-2.0"
 

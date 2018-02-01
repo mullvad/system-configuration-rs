@@ -2,15 +2,11 @@
 name = "system-configuration-sys"
 version = "0.1.0"
 authors = ["Mullvad VPN <admin@mullvad.net>", "Linus Färnstrand <linus@mullvad.net>", "Andrej Mihajlov <and@mullvad.net>"]
-description = "Low level bindings to System Configuration framework for macOS"
+description = "Low level bindings to SystemConfiguration framework for macOS"
 keywords = ["macos", "system", "configuration", "bindings"]
-categories = ["api-bindings", "external-ffi-bindings"]
+categories = ["external-ffi-bindings", "os::macos-apis"]
 repository = "https://github.com/mullvad/system-configuration-rs"
 license = "MIT/Apache-2.0"
-build = "build.rs"
 
 [dependencies]
 core-foundation-sys = "0.5"
-
-[build-dependencies]
-bindgen = "0.31"

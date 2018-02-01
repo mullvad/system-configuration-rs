@@ -12,6 +12,4 @@
 
 extern crate core_foundation_sys;
 
-pub mod dynamic_store {
-    include!(concat!(env!("OUT_DIR"), "/SCDynamicStore.rs"));
-}
+pub mod dynamic_store;
