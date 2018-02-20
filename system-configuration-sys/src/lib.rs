@@ -16,6 +16,12 @@
 #![allow(non_upper_case_globals)]
 #![allow(non_snake_case)]
 
-extern crate core_foundation_sys;
+pub extern crate core_foundation_sys;
+pub extern crate libc;
+
+/// This is a temporary solution.
+pub type dispatch_queue_t = *mut ::std::os::raw::c_void;
 
 pub mod dynamic_store;
+pub mod network_configuration;
+pub mod preferences;
