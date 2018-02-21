@@ -3,7 +3,7 @@ use core_foundation_sys::base::Boolean;
 use core_foundation_sys::dictionary::CFDictionaryRef;
 use core_foundation_sys::string::CFStringRef;
 
-use SCPreferencesRef;
+use preferences::SCPreferencesRef;
 
 use std::os::raw::{c_int, c_void};
 

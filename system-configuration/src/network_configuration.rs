@@ -1,17 +1,15 @@
-use std::fmt;
-use std::mem;
-use std::net::IpAddr;
-use std::ptr;
-
-use core_foundation::base::kCFAllocatorDefault;
-
 use core_foundation::array::CFArray;
 use core_foundation::base::{CFType, TCFType};
+use core_foundation::base::kCFAllocatorDefault;
 use core_foundation::dictionary::CFDictionary;
 use core_foundation::string::{CFString, CFStringRef};
 
 use dynamic_store::SCDynamicStoreBuilder;
-use system_configuration_sys::*;
+pub use system_configuration_sys::network_configuration::*;
+use system_configuration_sys::preferences::SCPreferencesCreate;
+
+use std::{fmt, ptr};
+use std::net::IpAddr;
 
 #[derive(Debug)]
 pub struct SCNetworkInterfaceMTU {
@@ -153,7 +151,7 @@ impl SCNetworkService {
         array
             .get_all_values()
             .iter()
-            .map(|service_ptr| SCNetworkService(unsafe { mem::transmute(*service_ptr) }))
+            .map(|service_ptr| SCNetworkService(*service_ptr as _))
             .collect::<Vec<SCNetworkService>>()
     }
 
@@ -174,7 +172,7 @@ impl SCNetworkService {
         let mut services = Vec::new();
 
         for id in array.get_all_values().iter() {
-            let id_ptr: CFStringRef = unsafe { mem::transmute(*id) };
+            let id_ptr: CFStringRef = *id as _;
             let service_ptr: SCNetworkServiceRef = unsafe { SCNetworkServiceCopy(prefs, id_ptr) };
             services.push(SCNetworkService(service_ptr));
         }
@@ -325,7 +323,7 @@ impl SCNetworkInterface {
         array
             .get_all_values()
             .iter()
-            .map(|interface_ptr| SCNetworkInterface(unsafe { mem::transmute(*interface_ptr) }))
+            .map(|interface_ptr| SCNetworkInterface(*interface_ptr as _))
             .collect::<Vec<SCNetworkInterface>>()
     }
 
