@@ -1,3 +1,5 @@
+required_version = "0.3.8"
+
 # Activation of features, almost objectively better ;)
 reorder_imports = true
 reorder_imported_names = true
@@ -9,3 +11,4 @@ wrap_comments = true
 
 # Heavily subjective style choices
 comment_width = 100
+blank_lines_upper_bound = 2
