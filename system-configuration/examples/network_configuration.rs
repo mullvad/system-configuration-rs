@@ -1,12 +1,11 @@
 extern crate system_configuration;
 
-use system_configuration::network_configuration::{
-    // SCNetworkInterfaceMTU, SCNetworkServiceDNS,
-    SCNetworkGlobal, SCNetworkService, SCNetworkInterface
-};
+use system_configuration::network_configuration::{// SCNetworkInterfaceMTU, SCNetworkServiceDNS,
+                                                  SCNetworkGlobal,
+                                                  SCNetworkInterface,
+                                                  SCNetworkService};
 
-
-fn main (){
+fn main() {
     println!("{:?}", SCNetworkGlobal.service());
 
     println!("{:?}", SCNetworkGlobal.interface());

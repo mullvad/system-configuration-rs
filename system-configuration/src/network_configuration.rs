@@ -1,19 +1,17 @@
 use std::fmt;
-use std::ptr;
 use std::mem;
 use std::net::IpAddr;
+use std::ptr;
 
 use core_foundation::base::kCFAllocatorDefault;
 
+use core_foundation::array::CFArray;
 use core_foundation::base::{CFType, TCFType};
+use core_foundation::dictionary::CFDictionary;
 use core_foundation::string::{CFString, CFStringRef};
-use core_foundation::array::{CFArray};
-use core_foundation::dictionary::{CFDictionary};
 
-
-use system_configuration_sys::*;
 use dynamic_store::SCDynamicStoreBuilder;
-
+use system_configuration_sys::*;
 
 #[derive(Debug)]
 pub struct SCNetworkInterfaceMTU {
@@ -26,7 +24,7 @@ impl SCNetworkInterfaceMTU {
     pub fn new(cur: u32, min: u32, max: u32) -> SCNetworkInterfaceMTU {
         SCNetworkInterfaceMTU { cur, min, max }
     }
-    
+
     pub fn cur(&self) -> u32 {
         self.cur
     }
@@ -49,9 +47,10 @@ pub struct SCNetworkServiceDNS {
 }
 
 impl SCNetworkServiceDNS {
-    pub fn new(domain_name: (Option<String>, Option<String>),
-               server_addresses: (Option<Vec<IpAddr>>, Option<Vec<IpAddr>>)) -> SCNetworkServiceDNS {
-        
+    pub fn new(
+        domain_name: (Option<String>, Option<String>),
+        server_addresses: (Option<Vec<IpAddr>>, Option<Vec<IpAddr>>),
+    ) -> SCNetworkServiceDNS {
         SCNetworkServiceDNS {
             state_domain_name: domain_name.0,
             setup_domain_name: domain_name.1,
@@ -61,14 +60,19 @@ impl SCNetworkServiceDNS {
     }
 
     pub fn domain_name(&self) -> (Option<String>, Option<String>) {
-        (self.state_domain_name.clone(), self.setup_domain_name.clone())
+        (
+            self.state_domain_name.clone(),
+            self.setup_domain_name.clone(),
+        )
     }
 
     pub fn server_addresses(&self) -> (Option<Vec<IpAddr>>, Option<Vec<IpAddr>>) {
-        (self.state_server_addresses.clone(), self.setup_server_addresses.clone())
+        (
+            self.state_server_addresses.clone(),
+            self.setup_server_addresses.clone(),
+        )
     }
 }
-
 
 pub struct SCNetworkGlobal;
 
@@ -82,7 +86,7 @@ impl SCNetworkGlobal {
                 if let Some(val) = dict.find2(&CFString::new(key)) {
                     let value = unsafe { CFType::wrap_under_get_rule(val) };
                     if let Some(value) = value.downcast::<CFString>() {
-                        return Some(value.to_string())
+                        return Some(value.to_string());
                     }
                 }
             }
@@ -93,7 +97,7 @@ impl SCNetworkGlobal {
 
     pub fn service(&self) -> Option<SCNetworkService> {
         if let Some(service_id) = SCNetworkGlobal::query("ng_service", "PrimaryService") {
-            for _service in SCNetworkService::list(){
+            for _service in SCNetworkService::list() {
                 if _service.id() == service_id {
                     return Some(_service);
                 }
@@ -105,7 +109,7 @@ impl SCNetworkGlobal {
 
     pub fn interface(&self) -> Option<SCNetworkInterface> {
         if let Some(ifname) = SCNetworkGlobal::query("ng_interface", "PrimaryInterface") {
-            for iface in SCNetworkInterface::list(){
+            for iface in SCNetworkInterface::list() {
                 if let Some(bsd_name) = iface.bsd_name() {
                     if bsd_name == ifname {
                         return Some(iface);
@@ -131,39 +135,41 @@ impl SCNetworkGlobal {
     // pub fn proxies(&self) ;
 }
 
-
 pub struct SCNetworkService(pub SCNetworkServiceRef);
 
 impl SCNetworkService {
     pub fn list() -> Vec<SCNetworkService> {
         let prefs = unsafe {
-            SCPreferencesCreate(kCFAllocatorDefault,
-                                CFString::from_static_string("ns_list").as_concrete_TypeRef(),
-                                ptr::null())
+            SCPreferencesCreate(
+                kCFAllocatorDefault,
+                CFString::from_static_string("ns_list").as_concrete_TypeRef(),
+                ptr::null(),
+            )
         };
 
-        let array: CFArray<SCNetworkServiceRef> = unsafe { 
-            CFArray::wrap_under_get_rule(SCNetworkServiceCopyAll(prefs)) 
-        };
+        let array: CFArray<SCNetworkServiceRef> =
+            unsafe { CFArray::wrap_under_get_rule(SCNetworkServiceCopyAll(prefs)) };
 
-        array.get_all_values()
-              .iter()
-              .map(|service_ptr| SCNetworkService( unsafe { mem::transmute(*service_ptr) } ))
-              .collect::<Vec<SCNetworkService>>()
+        array
+            .get_all_values()
+            .iter()
+            .map(|service_ptr| SCNetworkService(unsafe { mem::transmute(*service_ptr) }))
+            .collect::<Vec<SCNetworkService>>()
     }
-    
+
     pub fn list_order() -> Vec<SCNetworkService> {
         let prefs = unsafe {
-            SCPreferencesCreate(kCFAllocatorDefault, 
-                                CFString::from_static_string("ns_list_order").as_concrete_TypeRef(),
-                                ptr::null())
+            SCPreferencesCreate(
+                kCFAllocatorDefault,
+                CFString::from_static_string("ns_list_order").as_concrete_TypeRef(),
+                ptr::null(),
+            )
         };
 
         let netset = unsafe { SCNetworkSetCopyCurrent(prefs) };
 
-        let array: CFArray<SCNetworkServiceRef> = unsafe {
-            CFArray::wrap_under_get_rule( SCNetworkSetGetServiceOrder(netset) )
-        };
+        let array: CFArray<SCNetworkServiceRef> =
+            unsafe { CFArray::wrap_under_get_rule(SCNetworkSetGetServiceOrder(netset)) };
 
         let mut services = Vec::new();
 
@@ -177,15 +183,15 @@ impl SCNetworkService {
     }
 
     pub fn id(&self) -> String {
-        unsafe { CFString::wrap_under_get_rule( SCNetworkServiceGetServiceID( self.0 ) ) }.to_string()
+        unsafe { CFString::wrap_under_get_rule(SCNetworkServiceGetServiceID(self.0)) }.to_string()
     }
 
     pub fn name(&self) -> String {
-        unsafe { CFString::wrap_under_get_rule( SCNetworkServiceGetName( self.0 ) ) }.to_string()
+        unsafe { CFString::wrap_under_get_rule(SCNetworkServiceGetName(self.0)) }.to_string()
     }
 
     pub fn enabled(&self) -> bool {
-        let ret = unsafe { SCNetworkServiceGetEnabled( self.0 ) };
+        let ret = unsafe { SCNetworkServiceGetEnabled(self.0) };
         ret == 1
     }
 
@@ -198,14 +204,18 @@ impl SCNetworkService {
 
             if let Some(value) = store.get(CFString::new(&path)) {
                 if let Some(dict) = value.downcast_into::<CFDictionary>() {
-                    if let Some(domain_name) = dict.find2(&CFString::from_static_string("DomainName")) {
+                    if let Some(domain_name) =
+                        dict.find2(&CFString::from_static_string("DomainName"))
+                    {
                         let domain_name = unsafe { CFType::wrap_under_get_rule(domain_name) };
                         if let Some(domain_name) = domain_name.downcast::<CFString>() {
                             _domain_name = Some(domain_name.to_string());
                         }
                     }
 
-                    if let Some(addrs) = dict.find2(&CFString::from_static_string("ServerAddresses")) {
+                    if let Some(addrs) =
+                        dict.find2(&CFString::from_static_string("ServerAddresses"))
+                    {
                         let addrs = unsafe { CFType::wrap_under_get_rule(addrs) };
                         if let Some(addrs) = addrs.downcast::<CFArray<CFString>>() {
                             let mut temp = Vec::new();
@@ -226,8 +236,10 @@ impl SCNetworkService {
             return (_domain_name, _server_addresses);
         };
 
-        let (state_domain_name, state_server_addresses) = query(format!("State:/Network/Service/{}/DNS", self.id()));
-        let (setup_domain_name, setup_server_addresses) = query(format!("Setup:/Network/Service/{}/DNS", self.id()));
+        let (state_domain_name, state_server_addresses) =
+            query(format!("State:/Network/Service/{}/DNS", self.id()));
+        let (setup_domain_name, setup_server_addresses) =
+            query(format!("Setup:/Network/Service/{}/DNS", self.id()));
 
         SCNetworkServiceDNS {
             state_domain_name: state_domain_name,
@@ -242,10 +254,11 @@ impl SCNetworkService {
 
         if dns.setup_server_addresses.is_some() {
             let key = CFString::from_static_string("ServerAddresses");
-            let addrs: Vec<CFString> = dns.setup_server_addresses.unwrap()
-                                                    .iter()
-                                                    .map(|s| CFString::new(&format!("{}", s)) )
-                                                    .collect();
+            let addrs: Vec<CFString> = dns.setup_server_addresses
+                .unwrap()
+                .iter()
+                .map(|s| CFString::new(&format!("{}", s)))
+                .collect();
             let value = CFArray::from_CFTypes(&addrs);
             let dictionary = CFDictionary::from_CFType_pairs(&[(key, value)]);
 
@@ -268,16 +281,16 @@ impl SCNetworkService {
                 return false;
             }
         }
-        
+
         return true;
     }
 
     pub fn interface(&self) -> Option<SCNetworkInterface> {
-        let interface_ptr = unsafe { SCNetworkServiceGetInterface( self.0 ) };
+        let interface_ptr = unsafe { SCNetworkServiceGetInterface(self.0) };
         if interface_ptr.is_null() {
             None
         } else {
-            Some(SCNetworkInterface( interface_ptr ))
+            Some(SCNetworkInterface(interface_ptr))
         }
     }
 }
@@ -290,28 +303,30 @@ impl fmt::Display for SCNetworkService {
 
 impl fmt::Debug for SCNetworkService {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "SCNetworkService{{ id: {:?}, name: {:?}, enabled: {}, interface: {:?}, dns: {:?} }}",
-                self.id(),
-                self.name(),
-                self.enabled(),
-                self.interface(),
-                self.dns())
+        write!(
+            f,
+            "SCNetworkService{{ id: {:?}, name: {:?}, enabled: {}, interface: {:?}, dns: {:?} }}",
+            self.id(),
+            self.name(),
+            self.enabled(),
+            self.interface(),
+            self.dns()
+        )
     }
 }
-
 
 pub struct SCNetworkInterface(pub SCNetworkInterfaceRef);
 
 impl SCNetworkInterface {
     pub fn list() -> Vec<SCNetworkInterface> {
-        let array: CFArray<SCNetworkInterfaceRef> = unsafe {
-            CFArray::wrap_under_get_rule(SCNetworkInterfaceCopyAll())
-        };
+        let array: CFArray<SCNetworkInterfaceRef> =
+            unsafe { CFArray::wrap_under_get_rule(SCNetworkInterfaceCopyAll()) };
 
-        array.get_all_values()
-              .iter()
-              .map(|interface_ptr| SCNetworkInterface(unsafe { mem::transmute(*interface_ptr) }) )
-              .collect::<Vec<SCNetworkInterface>>()
+        array
+            .get_all_values()
+            .iter()
+            .map(|interface_ptr| SCNetworkInterface(unsafe { mem::transmute(*interface_ptr) }))
+            .collect::<Vec<SCNetworkInterface>>()
     }
 
     pub fn mtu(&self) -> Option<SCNetworkInterfaceMTU> {
@@ -319,7 +334,8 @@ impl SCNetworkInterface {
         let mut min = 0i32;
         let mut max = 0i32;
 
-        let ret_code = unsafe { SCNetworkInterfaceCopyMTU(self.0, &mut current, &mut min, &mut max) };
+        let ret_code =
+            unsafe { SCNetworkInterfaceCopyMTU(self.0, &mut current, &mut min, &mut max) };
         if ret_code == 0 {
             None
         } else {
@@ -337,7 +353,7 @@ impl SCNetworkInterface {
             if str_ptr.is_null() {
                 None
             } else {
-                Some(CFString::wrap_under_get_rule( str_ptr ).to_string())
+                Some(CFString::wrap_under_get_rule(str_ptr).to_string())
             }
         }
     }
@@ -347,23 +363,23 @@ impl SCNetworkInterface {
     }
 
     pub fn type_(&self) -> Option<String> {
-        unsafe { 
+        unsafe {
             let str_ptr = SCNetworkInterfaceGetInterfaceType(self.0);
             if str_ptr.is_null() {
                 None
             } else {
-                Some(CFString::wrap_under_get_rule( str_ptr ).to_string())
+                Some(CFString::wrap_under_get_rule(str_ptr).to_string())
             }
         }
     }
 
     pub fn hwaddr(&self) -> Option<String> {
-        unsafe { 
+        unsafe {
             let str_ptr = SCNetworkInterfaceGetHardwareAddressString(self.0);
             if str_ptr.is_null() {
                 None
             } else {
-                Some(CFString::wrap_under_get_rule( str_ptr ).to_string())
+                Some(CFString::wrap_under_get_rule(str_ptr).to_string())
             }
         }
     }
@@ -374,7 +390,7 @@ impl SCNetworkInterface {
             if config_ptr.is_null() {
                 None
             } else {
-                Some(CFDictionary::wrap_under_get_rule( config_ptr ))
+                Some(CFDictionary::wrap_under_get_rule(config_ptr))
             }
         }
     }
@@ -393,13 +409,21 @@ impl fmt::Debug for SCNetworkInterface {
             format!("None")
         } else {
             let mtu = mtu.unwrap();
-            format!("{{ cur: {}, min: {}, max: {} }}", mtu.cur(), mtu.min(), mtu.max())
+            format!(
+                "{{ cur: {}, min: {}, max: {} }}",
+                mtu.cur(),
+                mtu.min(),
+                mtu.max()
+            )
         };
 
-        write!(f, "SCNetworkInterface{{ mtu: {}, bsd_name: {:?}, type: {:?}, hwaddr: {:?} }}", 
-                    mtu_fmt,
-                    self.bsd_name(),
-                    self.type_(),
-                    self.hwaddr())
+        write!(
+            f,
+            "SCNetworkInterface{{ mtu: {}, bsd_name: {:?}, type: {:?}, hwaddr: {:?} }}",
+            mtu_fmt,
+            self.bsd_name(),
+            self.type_(),
+            self.hwaddr()
+        )
     }
 }

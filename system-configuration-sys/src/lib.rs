@@ -24,6 +24,5 @@ mod preferences;
 mod network_configuration;
 
 pub use dynamic_store::*;
-pub use preferences::*;
 pub use network_configuration::*;
-
+pub use preferences::*;
