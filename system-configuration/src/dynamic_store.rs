@@ -21,8 +21,8 @@ use core_foundation::runloop::CFRunLoopSource;
 use core_foundation::string::CFString;
 
 pub use system_configuration_sys::dynamic_store::*;
+use system_configuration_sys::libc::c_void;
 
-use std::os::raw::c_void;
 use std::ptr;
 
 /// Struct describing the callback happening when a watched value in the dynamic store is changed.

@@ -11,204 +11,38 @@ use core_foundation_sys::propertylist::CFPropertyListRef;
 use core_foundation_sys::runloop::CFRunLoopSourceRef;
 use core_foundation_sys::string::CFStringRef;
 
-/// This is a temporary solution.
-pub type dispatch_queue_t = *mut ::std::os::raw::c_void;
+use dispatch_queue_t;
+use libc::c_void;
 
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct __SCDynamicStore {
-    _unused: [u8; 0],
-}
-/// @typedef SCDynamicStoreRef
-/// @discussion This is the handle to an open a dynamic store session
-/// with the system configuration daemon.
+pub type __SCDynamicStore = c_void;
 pub type SCDynamicStoreRef = *const __SCDynamicStore;
-/// @typedef SCDynamicStoreContext
-/// Structure containing user-specified data and callbacks for an
-/// SCDynamicStore session.
-/// @field version The version number of the structure type being passed
-/// in as a parameter to the SCDynamicStore creation function.
-/// This structure is version 0.
-/// @field info A C pointer to a user-specified block of data.
-/// @field retain The callback used to add a retain for the info field.
-/// If this parameter is not a pointer to a function of the correct
-/// prototype, the behavior is undefined.  The value may be NULL.
-/// @field release The calllback used to remove a retain previously added
-/// for the info field.  If this parameter is not a pointer to a
-/// function of the correct prototype, the behavior is undefined.
-/// The value may be NULL.
-/// @field copyDescription The callback used to provide a description of
-/// the info field.
+
 #[repr(C)]
 pub struct SCDynamicStoreContext {
     pub version: CFIndex,
-    pub info: *mut ::std::os::raw::c_void,
-    pub retain: ::std::option::Option<
-        unsafe extern "C" fn(info: *const ::std::os::raw::c_void) -> *const ::std::os::raw::c_void,
-    >,
-    pub release: ::std::option::Option<unsafe extern "C" fn(info: *const ::std::os::raw::c_void)>,
-    pub copyDescription: ::std::option::Option<
-        unsafe extern "C" fn(info: *const ::std::os::raw::c_void) -> CFStringRef,
-    >,
+    pub info: *mut c_void,
+    pub retain: Option<unsafe extern "C" fn(info: *const c_void) -> *const c_void>,
+    pub release: Option<unsafe extern "C" fn(info: *const c_void)>,
+    pub copyDescription: Option<unsafe extern "C" fn(info: *const c_void) -> CFStringRef>,
 }
-#[test]
-fn bindgen_test_layout_SCDynamicStoreContext() {
-    assert_eq!(
-        ::std::mem::size_of::<SCDynamicStoreContext>(),
-        40usize,
-        concat!("Size of: ", stringify!(SCDynamicStoreContext))
-    );
-    assert_eq!(
-        ::std::mem::align_of::<SCDynamicStoreContext>(),
-        8usize,
-        concat!("Alignment of ", stringify!(SCDynamicStoreContext))
-    );
-    assert_eq!(
-        unsafe { &(*(::std::ptr::null::<SCDynamicStoreContext>())).version as *const _ as usize },
-        0usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(SCDynamicStoreContext),
-            "::",
-            stringify!(version)
-        )
-    );
-    assert_eq!(
-        unsafe { &(*(::std::ptr::null::<SCDynamicStoreContext>())).info as *const _ as usize },
-        8usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(SCDynamicStoreContext),
-            "::",
-            stringify!(info)
-        )
-    );
-    assert_eq!(
-        unsafe { &(*(::std::ptr::null::<SCDynamicStoreContext>())).retain as *const _ as usize },
-        16usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(SCDynamicStoreContext),
-            "::",
-            stringify!(retain)
-        )
-    );
-    assert_eq!(
-        unsafe { &(*(::std::ptr::null::<SCDynamicStoreContext>())).release as *const _ as usize },
-        24usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(SCDynamicStoreContext),
-            "::",
-            stringify!(release)
-        )
-    );
-    assert_eq!(
-        unsafe {
-            &(*(::std::ptr::null::<SCDynamicStoreContext>())).copyDescription as *const _ as usize
-        },
-        32usize,
-        concat!(
-            "Offset of field: ",
-            stringify!(SCDynamicStoreContext),
-            "::",
-            stringify!(copyDescription)
-        )
-    );
-}
-/// @typedef SCDynamicStoreCallBack
-/// @discussion Type of callback function used when notification of
-/// changes to the dynamic store is delivered.
-/// @param store The dynamic store session.
-/// @param changedKeys The list of changed keys.
-///
-/// The list includes any specific SCDynamicStore keys that
-/// changed (add, update, remove, notify) since the last call
-/// to SCDynamicStoreSetNotificationKeys or since the last
-/// notification callback. The list also includes any specific
-/// keys matching one of the pattern string(s) that changed.
-///
-/// An empty list indicates that the SCDynamicStore server
-/// restarted and that any assumptions based on prior content
-/// of the SCDynamicStore should be disgarded.
-///
-/// @param info A C pointer to a user-specified block of data.
-pub type SCDynamicStoreCallBack = ::std::option::Option<
-    unsafe extern "C" fn(
-        store: SCDynamicStoreRef,
-        changedKeys: CFArrayRef,
-        info: *mut ::std::os::raw::c_void,
-    ),
+
+pub type SCDynamicStoreCallBack = Option<
+    unsafe extern "C" fn(store: SCDynamicStoreRef, changedKeys: CFArrayRef, info: *mut c_void),
 >;
+
+#[link(name = "SystemConfiguration", kind = "framework")]
 extern "C" {
-    /// @function SCDynamicStoreGetTypeID
-    /// @discussion Returns the type identifier of all SCDynamicStore instances.
-    #[link_name = "\u{1}_SCDynamicStoreGetTypeID"]
+    pub static mut kSCDynamicStoreUseSessionKeys: CFStringRef;
+
     pub fn SCDynamicStoreGetTypeID() -> CFTypeID;
-}
-extern "C" {
-    /// @function SCDynamicStoreCreate
-    /// @discussion Creates a new session used to interact with the dynamic
-    /// store maintained by the System Configuration server.
-    /// @param allocator The CFAllocator that should be used to allocate
-    /// memory for the local dynamic store object.
-    /// This parameter may be NULL in which case the current
-    /// default CFAllocator is used. If this reference is not
-    /// a valid CFAllocator, the behavior is undefined.
-    /// @param name A string that describes the name of the calling
-    /// process or plug-in of the caller.
-    /// @param callout The function to be called when a watched value
-    /// in the dynamic store is changed.
-    /// A NULL value can be specified if no callouts are
-    /// desired.
-    /// @param context The SCDynamicStoreContext associated with the callout.
-    /// @result Returns a reference to the new SCDynamicStore session.
-    /// You must release the returned value.
-    #[link_name = "\u{1}_SCDynamicStoreCreate"]
+
     pub fn SCDynamicStoreCreate(
         allocator: CFAllocatorRef,
         name: CFStringRef,
         callout: SCDynamicStoreCallBack,
         context: *mut SCDynamicStoreContext,
     ) -> SCDynamicStoreRef;
-}
-extern "C" {
-    /// @function SCDynamicStoreCreateWithOptions
-    /// @discussion Creates a new session used to interact with the dynamic
-    /// store maintained by the System Configuration server.
-    /// @param allocator The CFAllocator that should be used to allocate
-    /// memory for the local dynamic store object.
-    /// This parameter may be NULL in which case the current
-    /// default CFAllocator is used. If this reference is not
-    /// a valid CFAllocator, the behavior is undefined.
-    /// @param name A string that describes the name of the calling
-    /// process or plug-in of the caller.
-    /// @param storeOptions A CFDictionary containing options for the
-    /// dynamic store session (such as whether all keys added or set
-    /// into the dynamic store should be per-session keys).
-    ///
-    /// Currently available options include:
-    ///
-    /// <TABLE BORDER>
-    /// <TR>
-    /// <TH>key</TD>
-    /// <TH>value</TD>
-    /// </TR>
-    /// <TR>
-    /// <TD>kSCDynamicStoreUseSessionKeys</TD>
-    /// <TD>CFBooleanRef</TD>
-    /// </TR>
-    /// </TABLE>
-    ///
-    /// A NULL value can be specified if no options are desired.
-    /// @param callout The function to be called when a watched value
-    /// in the dynamic store is changed.
-    /// A NULL value can be specified if no callouts are
-    /// desired.
-    /// @param context The SCDynamicStoreContext associated with the callout.
-    /// @result Returns a reference to the new SCDynamicStore session.
-    /// You must release the returned value.
-    #[link_name = "\u{1}_SCDynamicStoreCreateWithOptions"]
+
     pub fn SCDynamicStoreCreateWithOptions(
         allocator: CFAllocatorRef,
         name: CFStringRef,
@@ -216,215 +50,63 @@ extern "C" {
         callout: SCDynamicStoreCallBack,
         context: *mut SCDynamicStoreContext,
     ) -> SCDynamicStoreRef;
-}
-extern "C" {
-    #[link_name = "\u{1}_kSCDynamicStoreUseSessionKeys"]
-    pub static mut kSCDynamicStoreUseSessionKeys: CFStringRef;
-}
-extern "C" {
-    /// @function SCDynamicStoreCreateRunLoopSource
-    /// @discussion Creates a CFRunLoopSource object that can be added to the
-    /// application's run loop.  All dynamic store notifications are
-    /// delivered using this run loop source.
-    /// @param allocator The CFAllocator that should be used to allocate
-    /// memory for this run loop source.
-    /// This parameter may be NULL in which case the current
-    /// default CFAllocator is used. If this reference is not
-    /// a valid CFAllocator, the behavior is undefined.
-    /// @param store A reference to the dynamic store session.
-    /// @param order On platforms which support it, for source versions
-    /// which support it, this parameter determines the order in
-    /// which the sources which are ready to be processed are
-    /// handled. A lower order number causes processing before
-    /// higher order number sources. It is inadvisable to depend
-    /// on the order number for any architectural or design aspect
-    /// of code. In the absence of any reason to do otherwise,
-    /// zero should be used.
-    /// @result A reference to the new CFRunLoopSource.
-    /// You must release the returned value.
-    #[link_name = "\u{1}_SCDynamicStoreCreateRunLoopSource"]
+
     pub fn SCDynamicStoreCreateRunLoopSource(
         allocator: CFAllocatorRef,
         store: SCDynamicStoreRef,
         order: CFIndex,
     ) -> CFRunLoopSourceRef;
-}
-extern "C" {
-    /// @function SCDynamicStoreSetDispatchQueue
-    /// @discussion Initiates notifications for the Notification
-    /// Keys in store to the callback contained in store.
-    /// @param store A reference to the dynamic store session.
-    /// @param queue The dispatch queue to run the callback function on.
-    /// Pass NULL to disable notifications, and release the queue.
-    /// @result Returns TRUE on success, FALSE on failure.
-    #[link_name = "\u{1}_SCDynamicStoreSetDispatchQueue"]
+
     pub fn SCDynamicStoreSetDispatchQueue(
         store: SCDynamicStoreRef,
         queue: dispatch_queue_t,
     ) -> Boolean;
-}
-extern "C" {
-    /// @function SCDynamicStoreCopyKeyList
-    /// @discussion Returns an array of CFString keys representing the
-    /// current dynamic store entries that match a specified pattern.
-    /// @param store The dynamic store session.
-    /// @param pattern A regex(3) regular expression pattern
-    /// used to match the dynamic store keys.
-    /// @result Returns the list of matching keys; NULL if an error was
-    /// encountered.
-    /// You must release the returned value.
-    #[link_name = "\u{1}_SCDynamicStoreCopyKeyList"]
+
     pub fn SCDynamicStoreCopyKeyList(store: SCDynamicStoreRef, pattern: CFStringRef) -> CFArrayRef;
-}
-extern "C" {
-    /// @function SCDynamicStoreAddValue
-    /// @discussion Adds the key-value pair to the dynamic store if no
-    /// such key already exists.
-    /// @param store The dynamic store session.
-    /// @param key The key of the value to add to the dynamic store.
-    /// @param value The value to add to the dynamic store.
-    /// @result Returns TRUE if the key was added; FALSE if the key was already
-    /// present in the dynamic store or if an error was encountered.
-    #[link_name = "\u{1}_SCDynamicStoreAddValue"]
+
     pub fn SCDynamicStoreAddValue(
         store: SCDynamicStoreRef,
         key: CFStringRef,
         value: CFPropertyListRef,
     ) -> Boolean;
-}
-extern "C" {
-    /// @function SCDynamicStoreAddTemporaryValue
-    /// @discussion Temporarily adds the key-value pair to the dynamic store
-    /// if no such key already exists.  Unless the key is updated by another
-    /// session, the key-value pair will be removed automatically when the
-    /// session is closed.
-    /// @param store The dynamic store session.
-    /// @param key The key of the value to add to the dynamic store.
-    /// @param value The value to add to the dynamic store.
-    /// @result Returns TRUE if the key was added; FALSE if the key was already
-    /// present in the dynamic store or if an error was encountered.
-    #[link_name = "\u{1}_SCDynamicStoreAddTemporaryValue"]
+
     pub fn SCDynamicStoreAddTemporaryValue(
         store: SCDynamicStoreRef,
         key: CFStringRef,
         value: CFPropertyListRef,
     ) -> Boolean;
-}
-extern "C" {
-    /// @function SCDynamicStoreCopyValue
-    /// @discussion Gets the value of the specified key from the dynamic store.
-    /// @param store The dynamic store session.
-    /// @param key The key associated with the value you want to get.
-    /// @result Returns the value from the dynamic store that is associated with the given
-    /// key; NULL if no value was located or an error was encountered.
-    /// You must release the returned value.
-    #[link_name = "\u{1}_SCDynamicStoreCopyValue"]
+
     pub fn SCDynamicStoreCopyValue(store: SCDynamicStoreRef, key: CFStringRef)
         -> CFPropertyListRef;
-}
-extern "C" {
-    /// @function SCDynamicStoreCopyMultiple
-    /// @discussion Gets the values of multiple keys in the dynamic store.
-    /// @param store The dynamic store session.
-    /// @param keys The keys associated with the values you want to get; NULL if no specific
-    /// keys are requested.
-    /// @param patterns An array of regex(3) pattern strings used to match the keys; NULL
-    /// if no key patterns are requested.
-    /// @result Returns a dictionary containing the key-value pairs of specific keys and the
-    /// key-value pairs of keys that matched the specified patterns;
-    /// NULL if an error was encountered.
-    /// You must release the returned value.
-    #[link_name = "\u{1}_SCDynamicStoreCopyMultiple"]
+
     pub fn SCDynamicStoreCopyMultiple(
         store: SCDynamicStoreRef,
         keys: CFArrayRef,
         patterns: CFArrayRef,
     ) -> CFDictionaryRef;
-}
-extern "C" {
-    /// @function SCDynamicStoreSetValue
-    /// @discussion Adds or replaces a value in the dynamic store for
-    /// the specified key.
-    /// @param store The dynamic store session.
-    /// @param key The key you want to set.
-    /// @param value The value to add to or replace in the dynamic store.
-    /// @result Returns TRUE if the key was updated; FALSE if an error was encountered.
-    #[link_name = "\u{1}_SCDynamicStoreSetValue"]
+
     pub fn SCDynamicStoreSetValue(
         store: SCDynamicStoreRef,
         key: CFStringRef,
         value: CFPropertyListRef,
     ) -> Boolean;
-}
-extern "C" {
-    /// @function SCDynamicStoreSetMultiple
-    /// @discussion Updates multiple values in the dynamic store.
-    /// @param store The dynamic store session.
-    /// @param keysToSet A dictionary of key-value pairs you want to set into the dynamic store.
-    /// @param keysToRemove An array of keys you want to remove from the dynamic store.
-    /// @param keysToNotify An array of keys to flag as changed (without changing their values).
-    /// @result Returns TRUE if the dynamic store updates were successful; FALSE if an error was
-    /// encountered.
-    #[link_name = "\u{1}_SCDynamicStoreSetMultiple"]
+
     pub fn SCDynamicStoreSetMultiple(
         store: SCDynamicStoreRef,
         keysToSet: CFDictionaryRef,
         keysToRemove: CFArrayRef,
         keysToNotify: CFArrayRef,
     ) -> Boolean;
-}
-extern "C" {
-    /// @function SCDynamicStoreRemoveValue
-    /// @discussion Removes the value of the specified key from the
-    /// dynamic store.
-    /// @param store The dynamic store session.
-    /// @param key The key of the value you want to remove.
-    /// @result Returns TRUE if the key was removed; FALSE if no value was
-    /// located or an error was encountered.
-    #[link_name = "\u{1}_SCDynamicStoreRemoveValue"]
+
     pub fn SCDynamicStoreRemoveValue(store: SCDynamicStoreRef, key: CFStringRef) -> Boolean;
-}
-extern "C" {
-    /// @function SCDynamicStoreNotifyValue
-    /// @discussion Triggers a notification to be delivered for the
-    /// specified key in the dynamic store.
-    /// @param store The dynamic store session.
-    /// @param key The key that should be flagged as changed.  Any dynamic store sessions
-    /// that are monitoring this key will received a notification.  Note that the
-    /// key's value is not updated.
-    /// @result Returns TRUE if the notification was processed; FALSE if an error was encountered.
-    #[link_name = "\u{1}_SCDynamicStoreNotifyValue"]
+
     pub fn SCDynamicStoreNotifyValue(store: SCDynamicStoreRef, key: CFStringRef) -> Boolean;
-}
-extern "C" {
-    /// @function SCDynamicStoreSetNotificationKeys
-    /// @discussion Specifies a set of specific keys and key patterns
-    /// that should be monitored for changes.
-    /// @param store The dynamic store session being watched.
-    /// @param keys An array of keys to be monitored; NULL if no specific keys
-    /// are to be monitored.
-    /// @param patterns An array of regex(3) pattern strings used to match keys to be monitored;
-    /// NULL if no key patterns are to be monitored.
-    /// @result Returns TRUE if the set of notification keys and patterns was successfully
-    /// updated; FALSE if an error was encountered.
-    #[link_name = "\u{1}_SCDynamicStoreSetNotificationKeys"]
+
     pub fn SCDynamicStoreSetNotificationKeys(
         store: SCDynamicStoreRef,
         keys: CFArrayRef,
         patterns: CFArrayRef,
     ) -> Boolean;
-}
-extern "C" {
-    /// @function SCDynamicStoreCopyNotifiedKeys
-    /// @discussion Returns an array of CFString keys representing the
-    /// dynamic store entries that have changed since this
-    /// function was last called.  If possible, your application should
-    /// use the notification functions instead of polling for the list
-    /// of changed keys returned by this function.
-    /// @param store The dynamic store session.
-    /// @result Returns the list of changed keys;
-    /// NULL if an error was encountered.
-    /// You must release the returned value.
-    #[link_name = "\u{1}_SCDynamicStoreCopyNotifiedKeys"]
+
     pub fn SCDynamicStoreCopyNotifiedKeys(store: SCDynamicStoreRef) -> CFArrayRef;
 }
