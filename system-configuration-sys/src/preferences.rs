@@ -12,7 +12,7 @@ use core_foundation_sys::runloop::CFRunLoopRef;
 use core_foundation_sys::string::CFStringRef;
 
 use dispatch_queue_t;
-use std::os::raw::c_void;
+use libc::c_void;
 
 pub type AuthorizationOpaqueRef = c_void;
 pub type AuthorizationRef = *const AuthorizationOpaqueRef;
