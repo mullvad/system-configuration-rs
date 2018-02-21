@@ -1,3 +1,17 @@
+// Copyright 2017 Amagicom AB.
+//
+// Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
+// http://www.apache.org/licenses/LICENSE-2.0> or the MIT license
+// <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
+// option. This file may not be copied, modified, or distributed
+// except according to those terms.
+
+//! Bindings to [`SCNetworkConfiguration`].
+//!
+//! See the examples directory for examples how to use this module.
+//!
+//! [`SCNetworkConfiguration`]: https://developer.apple.com/documentation/systemconfiguration/scnetworkconfiguration
+
 use core_foundation::array::CFArray;
 use core_foundation::base::{CFType, TCFType};
 use core_foundation::base::kCFAllocatorDefault;
@@ -11,13 +25,20 @@ use system_configuration_sys::preferences::SCPreferencesCreate;
 use std::{fmt, ptr};
 use std::net::IpAddr;
 
+/// MTU
 #[derive(Debug)]
 pub struct SCNetworkInterfaceMTU {
+    /// the current MTU setting for the interface.
     pub current: u32,
+    /// the minimum MTU setting for the interface. If negative, the minimum setting could not
+    /// be determined.
     pub min: Option<u32>,
+    /// the maximum MTU setting for the interface. If negative, the maximum setting could not
+    /// be determined.
     pub max: Option<u32>,
 }
 
+/// DNS
 #[derive(Debug)]
 pub struct SCNetworkServiceDNS {
     state_domain_name: Option<String>,
@@ -27,6 +48,7 @@ pub struct SCNetworkServiceDNS {
 }
 
 impl SCNetworkServiceDNS {
+    /// DNS Constructor
     pub fn new(
         domain_name: (Option<String>, Option<String>),
         server_addresses: (Option<Vec<IpAddr>>, Option<Vec<IpAddr>>),
@@ -38,7 +60,8 @@ impl SCNetworkServiceDNS {
             setup_server_addresses: server_addresses.1,
         }
     }
-
+    
+    /// Returns DomainName (state and setup)
     pub fn domain_name(&self) -> (Option<String>, Option<String>) {
         (
             self.state_domain_name.clone(),
@@ -46,6 +69,7 @@ impl SCNetworkServiceDNS {
         )
     }
 
+    /// Returns ServerAddresses (state and setup)
     pub fn server_addresses(&self) -> (Option<Vec<IpAddr>>, Option<Vec<IpAddr>>) {
         (
             self.state_server_addresses.clone(),
@@ -54,6 +78,7 @@ impl SCNetworkServiceDNS {
     }
 }
 
+/// Global network object
 pub struct SCNetworkGlobal;
 
 impl SCNetworkGlobal {
@@ -75,6 +100,7 @@ impl SCNetworkGlobal {
         return None;
     }
 
+    /// Returns primary network service
     pub fn service(&self) -> Option<SCNetworkService> {
         if let Some(service_id) = SCNetworkGlobal::query("ng_service", "PrimaryService") {
             for _service in SCNetworkService::list() {
@@ -87,6 +113,7 @@ impl SCNetworkGlobal {
         return None;
     }
 
+    /// Returns primary network interface
     pub fn interface(&self) -> Option<SCNetworkInterface> {
         if let Some(ifname) = SCNetworkGlobal::query("ng_interface", "PrimaryInterface") {
             for iface in SCNetworkInterface::list() {
@@ -101,6 +128,7 @@ impl SCNetworkGlobal {
         return None;
     }
 
+    /// Returns default route on primary network service.
     pub fn router(&self) -> Option<IpAddr> {
         if let Some(router_str) = SCNetworkGlobal::query("ng_interface_router", "Router") {
             if let Ok(router_ip) = router_str.parse::<IpAddr>() {
@@ -115,9 +143,11 @@ impl SCNetworkGlobal {
     // pub fn proxies(&self) ;
 }
 
+/// Network service object.
 pub struct SCNetworkService(pub SCNetworkServiceRef);
 
 impl SCNetworkService {
+    /// Returns all available network services for the specified preferences.
     pub fn list() -> Vec<SCNetworkService> {
         let prefs = unsafe {
             SCPreferencesCreate(
@@ -137,6 +167,7 @@ impl SCNetworkService {
             .collect::<Vec<SCNetworkService>>()
     }
 
+    /// Returns the user-specified ordering of network services within the specified set.
     pub fn list_order() -> Vec<SCNetworkService> {
         let prefs = unsafe {
             SCPreferencesCreate(
@@ -162,19 +193,23 @@ impl SCNetworkService {
         services
     }
 
+    /// Returns the identifier for this network service.
     pub fn id(&self) -> String {
         unsafe { CFString::wrap_under_get_rule(SCNetworkServiceGetServiceID(self.0)) }.to_string()
     }
 
+    /// Returns the user-specified name associated with this network service.
     pub fn name(&self) -> String {
         unsafe { CFString::wrap_under_get_rule(SCNetworkServiceGetName(self.0)) }.to_string()
     }
 
+    /// Returns this network service is enabled or disabled.
     pub fn enabled(&self) -> bool {
         let ret = unsafe { SCNetworkServiceGetEnabled(self.0) };
         ret == 1
     }
 
+    /// Returns the DNS infomation on this network service
     pub fn dns(&self) -> SCNetworkServiceDNS {
         let store = SCDynamicStoreBuilder::new("ns_dns").build();
 
@@ -229,6 +264,7 @@ impl SCNetworkService {
         }
     }
 
+    /// Setting DNS on this network service
     pub fn set_dns(&self, dns: SCNetworkServiceDNS) -> bool {
         let store = SCDynamicStoreBuilder::new("ns_dns_set").build();
 
@@ -265,6 +301,7 @@ impl SCNetworkService {
         return true;
     }
 
+    /// Returns the network interface associated with this network service.
     pub fn interface(&self) -> Option<SCNetworkInterface> {
         let interface_ptr = unsafe { SCNetworkServiceGetInterface(self.0) };
         if interface_ptr.is_null() {
@@ -295,9 +332,11 @@ impl fmt::Debug for SCNetworkService {
     }
 }
 
+/// network interface
 pub struct SCNetworkInterface(pub SCNetworkInterfaceRef);
 
 impl SCNetworkInterface {
+    /// Returns all network-capable interfaces on the system.
     pub fn list() -> Vec<SCNetworkInterface> {
         let array: CFArray<SCNetworkInterfaceRef> =
             unsafe { CFArray::wrap_under_get_rule(SCNetworkInterfaceCopyAll()) };
@@ -309,6 +348,7 @@ impl SCNetworkInterface {
             .collect::<Vec<SCNetworkInterface>>()
     }
 
+    /// Returns the current MTU setting and the range of allowable values
     pub fn mtu(&self) -> Option<SCNetworkInterfaceMTU> {
         let mut current = 0i32;
         let mut min = 0i32;
@@ -327,6 +367,7 @@ impl SCNetworkInterface {
         }
     }
 
+    /// Returns the BSD interface or device name
     pub fn bsd_name(&self) -> Option<String> {
         unsafe {
             let str_ptr = SCNetworkInterfaceGetBSDName(self.0);
@@ -338,10 +379,12 @@ impl SCNetworkInterface {
         }
     }
 
+    /// Returns the BSD interface or device name
     pub fn name(&self) -> Option<String> {
         self.bsd_name()
     }
 
+    /// Returns the network interface type
     pub fn type_(&self) -> Option<String> {
         unsafe {
             let str_ptr = SCNetworkInterfaceGetInterfaceType(self.0);
@@ -353,6 +396,7 @@ impl SCNetworkInterface {
         }
     }
 
+    /// Returns a displayable link layer address
     pub fn hwaddr(&self) -> Option<String> {
         unsafe {
             let str_ptr = SCNetworkInterfaceGetHardwareAddressString(self.0);
@@ -364,6 +408,7 @@ impl SCNetworkInterface {
         }
     }
 
+    /// Returns the configuration settings associated with this network interface
     pub fn config(&self) -> Option<CFDictionary> {
         unsafe {
             let config_ptr = SCNetworkInterfaceGetConfiguration(self.0);
