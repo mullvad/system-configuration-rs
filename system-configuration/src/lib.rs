@@ -16,11 +16,15 @@
 //!
 //! [SystemConfiguration]: https://developer.apple.com/documentation/systemconfiguration?language=objc
 //! [`system-configuration-sys`]: https://crates.io/crates/system-configuration-sys
-
+#![cfg_attr(all(feature = "nightly", test), feature(test))]
 #![deny(missing_docs)]
 
 #[macro_use]
 extern crate core_foundation;
 extern crate system_configuration_sys;
+#[cfg(all(feature = "nightly", test))]
+extern crate test;
 
 pub mod dynamic_store;
+pub mod preferences;
+pub mod network_configuration;
