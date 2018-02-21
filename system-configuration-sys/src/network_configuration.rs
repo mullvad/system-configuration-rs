@@ -11,9 +11,8 @@ use core_foundation_sys::runloop::CFRunLoopRef;
 use core_foundation_sys::string::CFStringRef;
 
 use dispatch_queue_t;
-use libc::sockaddr;
+use libc::{c_char, c_int, c_void, sockaddr};
 use preferences::SCPreferencesRef;
-use std::os::raw::{c_char, c_int, c_void};
 
 pub type __SCNetworkReachability = c_void;
 pub type SCNetworkReachabilityRef = *const __SCNetworkReachability;

@@ -44,7 +44,7 @@ bindgen \
     --raw-line "use core_foundation_sys::runloop::CFRunLoopRef;" \
     --raw-line "" \
     --raw-line "use dispatch_queue_t;" \
-    --raw-line "use std::os::raw::c_void;" \
+    --raw-line "use libc::c_void;" \
     --raw-line "" \
     --raw-line "pub type AuthorizationOpaqueRef = c_void;" \
     --raw-line "pub type __SCPreferences = c_void;" \
@@ -113,9 +113,8 @@ bindgen \
     --raw-line "use core_foundation_sys::runloop::CFRunLoopRef;" \
     --raw-line "" \
     --raw-line "use dispatch_queue_t;" \
-    --raw-line "use libc::sockaddr;" \
+    --raw-line "use libc::{c_void, c_char, c_int, sockaddr};" \
     --raw-line "use preferences::SCPreferencesRef;" \
-    --raw-line "use std::os::raw::{c_void, c_char, c_int};" \
     --raw-line "" \
     --raw-line "pub type __SCNetworkReachability = c_void;" \
     --raw-line "pub type __SCNetworkConnection = c_void;" \
