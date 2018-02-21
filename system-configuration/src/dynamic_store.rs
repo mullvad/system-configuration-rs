@@ -221,6 +221,7 @@ impl SCDynamicStore {
         success != 0
     }
 
+    /// Removes the value of the specified key from the dynamic store.
     pub fn remove<S: Into<CFString>>(&self, key: S) -> bool {
         let cf_key = key.into();
         let success = unsafe {
