@@ -18,7 +18,7 @@ use core_foundation::base::kCFAllocatorDefault;
 use core_foundation::dictionary::CFDictionary;
 use core_foundation::string::{CFString, CFStringRef};
 
-use dynamic_store::SCDynamicStoreBuilder;
+use dynamic_store::{SCDynamicStoreBuilder, SCDynamicStore};
 pub use system_configuration_sys::network_configuration::*;
 use system_configuration_sys::preferences::SCPreferencesCreate;
 
@@ -27,33 +27,33 @@ use std::net::IpAddr;
 
 /// MTU
 #[derive(Debug)]
-pub struct SCNetworkInterfaceMTU {
+pub struct SCNetworkInterfaceMtu {
     /// the current MTU setting for the interface.
     pub current: u32,
-    /// the minimum MTU setting for the interface. If negative, the minimum setting could not
+    /// the minimum MTU setting for the interface. If None, the minimum setting could not
     /// be determined.
     pub min: Option<u32>,
-    /// the maximum MTU setting for the interface. If negative, the maximum setting could not
+    /// the maximum MTU setting for the interface. If None, the maximum setting could not
     /// be determined.
     pub max: Option<u32>,
 }
 
 /// DNS
 #[derive(Debug)]
-pub struct SCNetworkServiceDNS {
+pub struct SCNetworkServiceDns {
     state_domain_name: Option<String>,
     setup_domain_name: Option<String>,
     state_server_addresses: Option<Vec<IpAddr>>,
     setup_server_addresses: Option<Vec<IpAddr>>,
 }
 
-impl SCNetworkServiceDNS {
+impl SCNetworkServiceDns {
     /// DNS Constructor
     pub fn new(
         domain_name: (Option<String>, Option<String>),
         server_addresses: (Option<Vec<IpAddr>>, Option<Vec<IpAddr>>),
-    ) -> SCNetworkServiceDNS {
-        SCNetworkServiceDNS {
+    ) -> SCNetworkServiceDns {
+        SCNetworkServiceDns {
             state_domain_name: domain_name.0,
             setup_domain_name: domain_name.1,
             state_server_addresses: server_addresses.0,
@@ -78,75 +78,64 @@ impl SCNetworkServiceDNS {
     }
 }
 
-/// Global network object
-pub struct SCNetworkGlobal;
+fn global_query(store: &SCDynamicStore, key: &str) -> Option<String> {
+    let path = CFString::from_static_string("State:/Network/Global/IPv4");
 
-impl SCNetworkGlobal {
-    fn query(session_name: &str, key: &str) -> Option<String> {
-        let store = SCDynamicStoreBuilder::new(session_name).build();
-        let path = CFString::from_static_string("State:/Network/Global/IPv4");
-
-        if let Some(value) = store.get(path.clone()) {
-            if let Some(dict) = value.downcast_into::<CFDictionary>() {
-                if let Some(val) = dict.find2(&CFString::new(key)) {
-                    let value = unsafe { CFType::wrap_under_get_rule(val) };
-                    if let Some(value) = value.downcast::<CFString>() {
-                        return Some(value.to_string());
-                    }
+    if let Some(value) = store.get(path.clone()) {
+        if let Some(dict) = value.downcast_into::<CFDictionary>() {
+            if let Some(val) = dict.find2(&CFString::new(key)) {
+                let value = unsafe { CFType::wrap_under_get_rule(val) };
+                if let Some(value) = value.downcast::<CFString>() {
+                    return Some(value.to_string());
                 }
             }
         }
-
-        return None;
     }
 
-    /// Returns primary network service
-    pub fn service(&self) -> Option<SCNetworkService> {
-        if let Some(service_id) = SCNetworkGlobal::query("ng_service", "PrimaryService") {
-            for _service in SCNetworkService::list() {
-                if _service.id() == service_id {
-                    return Some(_service);
-                }
-            }
-        }
-
-        return None;
-    }
-
-    /// Returns primary network interface
-    pub fn interface(&self) -> Option<SCNetworkInterface> {
-        if let Some(ifname) = SCNetworkGlobal::query("ng_interface", "PrimaryInterface") {
-            for iface in SCNetworkInterface::list() {
-                if let Some(bsd_name) = iface.bsd_name() {
-                    if bsd_name == ifname {
-                        return Some(iface);
-                    }
-                }
-            }
-        }
-
-        return None;
-    }
-
-    /// Returns default route on primary network service.
-    pub fn router(&self) -> Option<IpAddr> {
-        if let Some(router_str) = SCNetworkGlobal::query("ng_interface_router", "Router") {
-            if let Ok(router_ip) = router_str.parse::<IpAddr>() {
-                return Some(router_ip);
-            }
-        }
-
-        return None;
-    }
-
-    // pub fn netinfo(&self);
-    // pub fn proxies(&self) ;
+    return None;
 }
 
-/// Network service object.
-pub struct SCNetworkService(pub SCNetworkServiceRef);
+
+/// Returns default route on primary network service.
+pub fn global_router(store: &SCDynamicStore) -> Option<IpAddr> {
+    // let store = SCDynamicStoreBuilder::new(session_name).build();
+    if let Some(router_str) = global_query(store, "Router") {
+        if let Ok(router_ip) = router_str.parse::<IpAddr>() {
+            return Some(router_ip);
+        }
+    }
+
+    return None;
+}
+
+// pub fn netinfo(&self);
+// pub fn proxies(&self) ;
+
+
+declare_TCFType!{
+    /// Network service object.
+    SCNetworkService, SCNetworkServiceRef
+}
+
+impl_TCFType!(SCNetworkService, SCNetworkServiceRef, SCNetworkServiceGetTypeID);
+
+
 
 impl SCNetworkService {
+    /// Returns primary network service
+    pub fn global(store: &SCDynamicStore) -> Option<Self> {
+        // let store = SCDynamicStoreBuilder::new(session_name).build();
+        if let Some(service_id) = global_query(store, "PrimaryService") {
+            for service in SCNetworkService::list() {
+                if service.id() == service_id {
+                    return Some(service);
+                }
+            }
+        }
+
+        return None;
+    }
+
     /// Returns all available network services for the specified preferences.
     pub fn list() -> Vec<SCNetworkService> {
         let prefs = unsafe {
@@ -163,7 +152,11 @@ impl SCNetworkService {
         array
             .get_all_values()
             .iter()
-            .map(|service_ptr| SCNetworkService(*service_ptr as _))
+            .map(|service_ptr| {
+                unsafe {
+                    SCNetworkService::wrap_under_get_rule(*service_ptr as _)
+                }
+            })
             .collect::<Vec<SCNetworkService>>()
     }
 
@@ -187,7 +180,7 @@ impl SCNetworkService {
         for id in array.get_all_values().iter() {
             let id_ptr: CFStringRef = *id as _;
             let service_ptr: SCNetworkServiceRef = unsafe { SCNetworkServiceCopy(prefs, id_ptr) };
-            services.push(SCNetworkService(service_ptr));
+            services.push(unsafe { SCNetworkService::wrap_under_get_rule(service_ptr) });
         }
 
         services
@@ -210,7 +203,7 @@ impl SCNetworkService {
     }
 
     /// Returns the DNS infomation on this network service
-    pub fn dns(&self) -> SCNetworkServiceDNS {
+    pub fn dns(&self) -> SCNetworkServiceDns {
         let store = SCDynamicStoreBuilder::new("ns_dns").build();
 
         let query = |path: String| -> (Option<String>, Option<Vec<IpAddr>>) {
@@ -256,7 +249,7 @@ impl SCNetworkService {
         let (setup_domain_name, setup_server_addresses) =
             query(format!("Setup:/Network/Service/{}/DNS", self.id()));
 
-        SCNetworkServiceDNS {
+        SCNetworkServiceDns {
             state_domain_name: state_domain_name,
             state_server_addresses: state_server_addresses,
             setup_domain_name: setup_domain_name,
@@ -265,7 +258,7 @@ impl SCNetworkService {
     }
 
     /// Setting DNS on this network service
-    pub fn set_dns(&self, dns: SCNetworkServiceDNS) -> bool {
+    pub fn set_dns(&self, dns: SCNetworkServiceDns) -> bool {
         let store = SCDynamicStoreBuilder::new("ns_dns_set").build();
 
         if dns.setup_server_addresses.is_some() {
@@ -307,7 +300,7 @@ impl SCNetworkService {
         if interface_ptr.is_null() {
             None
         } else {
-            Some(SCNetworkInterface(interface_ptr))
+            Some(unsafe { SCNetworkInterface::wrap_under_get_rule(interface_ptr) })
         }
     }
 }
@@ -332,10 +325,31 @@ impl fmt::Debug for SCNetworkService {
     }
 }
 
-/// network interface
-pub struct SCNetworkInterface(pub SCNetworkInterfaceRef);
+
+declare_TCFType!{
+    /// Network interface object.
+    SCNetworkInterface, SCNetworkInterfaceRef
+}
+
+impl_TCFType!(SCNetworkInterface, SCNetworkInterfaceRef, SCNetworkInterfaceGetTypeID);
+
 
 impl SCNetworkInterface {
+    /// Returns primary network interface
+    pub fn global(store: &SCDynamicStore) -> Option<Self> {
+        if let Some(ifname) = global_query(store, "PrimaryInterface") {
+            for iface in SCNetworkInterface::list() {
+                if let Some(bsd_name) = iface.bsd_name() {
+                    if bsd_name == ifname {
+                        return Some(iface);
+                    }
+                }
+            }
+        }
+
+        return None;
+    }
+
     /// Returns all network-capable interfaces on the system.
     pub fn list() -> Vec<SCNetworkInterface> {
         let array: CFArray<SCNetworkInterfaceRef> =
@@ -344,12 +358,16 @@ impl SCNetworkInterface {
         array
             .get_all_values()
             .iter()
-            .map(|interface_ptr| SCNetworkInterface(*interface_ptr as _))
+            .map(|interface_ptr| {
+                unsafe {
+                    SCNetworkInterface::wrap_under_get_rule(*interface_ptr as _)
+                }
+            })
             .collect::<Vec<SCNetworkInterface>>()
     }
 
     /// Returns the current MTU setting and the range of allowable values
-    pub fn mtu(&self) -> Option<SCNetworkInterfaceMTU> {
+    pub fn mtu(&self) -> Option<SCNetworkInterfaceMtu> {
         let mut current = 0i32;
         let mut min = 0i32;
         let mut max = 0i32;
@@ -359,7 +377,7 @@ impl SCNetworkInterface {
         if ret_code == 0 {
             None
         } else {
-            Some(SCNetworkInterfaceMTU {
+            Some(SCNetworkInterfaceMtu {
                 current: current as u32,
                 min: if min < 0 { None } else { Some(min as u32) },
                 max: if max < 0 { None } else { Some(max as u32) },

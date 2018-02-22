@@ -1,6 +1,6 @@
 extern crate system_configuration;
 
-use system_configuration::network_configuration::{SCNetworkGlobal, SCNetworkServiceDNS};
+use system_configuration::network_configuration::{SCNetworkGlobal, SCNetworkServiceDns};
 
 use std::net::{IpAddr, Ipv4Addr};
 
@@ -36,7 +36,7 @@ fn main() {
         global_service.name()
     );
 
-    let dns = SCNetworkServiceDNS::new((None, None), (None, Some(addrs)));
+    let dns = SCNetworkServiceDns::new((None, None), (None, Some(addrs)));
 
     println!("Success: {:?}", global_service.set_dns(dns));
 
