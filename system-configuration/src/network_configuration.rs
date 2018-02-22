@@ -172,14 +172,13 @@ impl SCNetworkService {
 
         let netset = unsafe { SCNetworkSetCopyCurrent(prefs) };
 
-        let array: CFArray<SCNetworkServiceRef> =
+        let array: CFArray<CFStringRef> =
             unsafe { CFArray::wrap_under_get_rule(SCNetworkSetGetServiceOrder(netset)) };
 
         let mut services = Vec::new();
 
-        for id in array.get_all_values().iter() {
-            let id_ptr: CFStringRef = *id as _;
-            let service_ptr: SCNetworkServiceRef = unsafe { SCNetworkServiceCopy(prefs, id_ptr) };
+        for id_ptr in array.get_all_values().iter() {
+            let service_ptr: SCNetworkServiceRef = unsafe { SCNetworkServiceCopy(prefs, *id_ptr as _) };
             services.push(unsafe { SCNetworkService::wrap_under_get_rule(service_ptr) });
         }
 
