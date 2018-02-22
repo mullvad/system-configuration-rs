@@ -18,7 +18,7 @@ use core_foundation::base::kCFAllocatorDefault;
 use core_foundation::dictionary::CFDictionary;
 use core_foundation::string::{CFString, CFStringRef};
 
-use dynamic_store::{SCDynamicStoreBuilder, SCDynamicStore};
+use dynamic_store::{SCDynamicStore, SCDynamicStoreBuilder};
 pub use system_configuration_sys::network_configuration::*;
 use system_configuration_sys::preferences::SCPreferencesCreate;
 
@@ -60,7 +60,7 @@ impl SCNetworkServiceDns {
             setup_server_addresses: server_addresses.1,
         }
     }
-    
+
     /// Returns DomainName (state and setup)
     pub fn domain_name(&self) -> (Option<String>, Option<String>) {
         (
@@ -108,17 +108,17 @@ pub fn global_router(store: &SCDynamicStore) -> Option<IpAddr> {
     return None;
 }
 
-// pub fn netinfo(&self);
-// pub fn proxies(&self) ;
-
 
 declare_TCFType!{
     /// Network service object.
     SCNetworkService, SCNetworkServiceRef
 }
 
-impl_TCFType!(SCNetworkService, SCNetworkServiceRef, SCNetworkServiceGetTypeID);
-
+impl_TCFType!(
+    SCNetworkService,
+    SCNetworkServiceRef,
+    SCNetworkServiceGetTypeID
+);
 
 
 impl SCNetworkService {
@@ -152,11 +152,7 @@ impl SCNetworkService {
         array
             .get_all_values()
             .iter()
-            .map(|service_ptr| {
-                unsafe {
-                    SCNetworkService::wrap_under_get_rule(*service_ptr as _)
-                }
-            })
+            .map(|service_ptr| unsafe { SCNetworkService::wrap_under_get_rule(*service_ptr as _) })
             .collect::<Vec<SCNetworkService>>()
     }
 
@@ -178,7 +174,8 @@ impl SCNetworkService {
         let mut services = Vec::new();
 
         for id_ptr in array.get_all_values().iter() {
-            let service_ptr: SCNetworkServiceRef = unsafe { SCNetworkServiceCopy(prefs, *id_ptr as _) };
+            let service_ptr: SCNetworkServiceRef =
+                unsafe { SCNetworkServiceCopy(prefs, *id_ptr as _) };
             services.push(unsafe { SCNetworkService::wrap_under_get_rule(service_ptr) });
         }
 
@@ -330,7 +327,11 @@ declare_TCFType!{
     SCNetworkInterface, SCNetworkInterfaceRef
 }
 
-impl_TCFType!(SCNetworkInterface, SCNetworkInterfaceRef, SCNetworkInterfaceGetTypeID);
+impl_TCFType!(
+    SCNetworkInterface,
+    SCNetworkInterfaceRef,
+    SCNetworkInterfaceGetTypeID
+);
 
 
 impl SCNetworkInterface {
@@ -357,10 +358,8 @@ impl SCNetworkInterface {
         array
             .get_all_values()
             .iter()
-            .map(|interface_ptr| {
-                unsafe {
-                    SCNetworkInterface::wrap_under_get_rule(*interface_ptr as _)
-                }
+            .map(|interface_ptr| unsafe {
+                SCNetworkInterface::wrap_under_get_rule(*interface_ptr as _)
             })
             .collect::<Vec<SCNetworkInterface>>()
     }
