@@ -10,11 +10,11 @@ use system_configuration::network_configuration::{global_router, SCNetworkInterf
 fn main() {
     let store = SCDynamicStoreBuilder::new("session_name").build();
 
-
-    println!("Global Service:\n{:?}\n", SCNetworkService::global(&store));
+    let service = SCNetworkService::global(&store).unwrap();
+    println!("Global Service:\n{:?}\n", service);
     println!(
         "Global Interface:\n{:?}\n",
-        SCNetworkInterface::global(&store)
+        service.interface()
     );
     println!("Global Service Router:\n{:?}\n", global_router(&store));
 
