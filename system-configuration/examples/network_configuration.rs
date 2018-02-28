@@ -12,10 +12,7 @@ fn main() {
 
     let service = SCNetworkService::global(&store).unwrap();
     println!("Global Service:\n{:?}\n", service);
-    println!(
-        "Global Interface:\n{:?}\n",
-        service.interface()
-    );
+    println!("Global Interface:\n{:?}\n", service.interface());
     println!("Global Service Router:\n{:?}\n", global_router(&store));
 
     println!("\n-listnetworkserviceorder:");

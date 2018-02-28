@@ -1,7 +1,7 @@
 extern crate system_configuration;
 
 use system_configuration::dynamic_store::SCDynamicStoreBuilder;
-use system_configuration::network_configuration::{SCNetworkService};
+use system_configuration::network_configuration::SCNetworkService;
 
 use std::net::{IpAddr, Ipv4Addr};
 
@@ -22,7 +22,9 @@ fn main() {
     let store = SCDynamicStoreBuilder::new("session_name").build();
 
     let global_service = SCNetworkService::global(&store).expect("No PrimaryService active");
-    let global_interface = global_service.interface().expect("No PrimaryInterface active");
+    let global_interface = global_service
+        .interface()
+        .expect("No PrimaryInterface active");
 
     println!("Global Service:");
     println!("\tid: {:?}", global_service.id());
@@ -36,9 +38,12 @@ fn main() {
         addrs,
         global_service.name()
     );
-    
 
-    println!("Success: {:?}", global_service.set_dns_server_addresses(&store, Some(addrs) ));
+
+    println!(
+        "Success: {:?}",
+        global_service.set_dns_server_addresses(&store, Some(addrs))
+    );
 
     // Check
     // networksetup -getdnsservers "Wi-Fi"

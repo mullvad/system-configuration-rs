@@ -16,9 +16,9 @@ use core_foundation::array::CFArray;
 use core_foundation::base::{CFType, TCFType};
 use core_foundation::base::kCFAllocatorDefault;
 use core_foundation::dictionary::CFDictionary;
-use core_foundation::string::{CFString};
+use core_foundation::string::CFString;
 
-use dynamic_store::{SCDynamicStore};
+use dynamic_store::SCDynamicStore;
 pub use system_configuration_sys::network_configuration::*;
 use system_configuration_sys::preferences::SCPreferencesCreate;
 
@@ -59,7 +59,6 @@ pub struct DnsSetting {
 
 fn global_query(store: &SCDynamicStore, key: &str) -> Option<String> {
     let path = CFString::from_static_string("State:/Network/Global/IPv4");
-
     if let Some(value) = store.get(path.clone()) {
         if let Some(dict) = value.downcast_into::<CFDictionary>() {
             if let Some(val) = dict.find2(&CFString::new(key)) {
@@ -77,7 +76,6 @@ fn global_query(store: &SCDynamicStore, key: &str) -> Option<String> {
 
 /// Returns default route on primary network service.
 pub fn global_router(store: &SCDynamicStore) -> Option<IpAddr> {
-    // let store = SCDynamicStoreBuilder::new(session_name).build();
     if let Some(router_str) = global_query(store, "Router") {
         if let Ok(router_ip) = router_str.parse::<IpAddr>() {
             return Some(router_ip);
@@ -103,7 +101,6 @@ impl_TCFType!(
 impl SCNetworkService {
     /// Returns primary network service
     pub fn global(store: &SCDynamicStore) -> Option<Self> {
-        // let store = SCDynamicStoreBuilder::new(session_name).build();
         if let Some(service_id) = global_query(store, "PrimaryService") {
             for service in SCNetworkService::list() {
                 if service.id() == service_id {
@@ -128,9 +125,10 @@ impl SCNetworkService {
         let array: CFArray<CFType> =
             unsafe { CFArray::wrap_under_get_rule(SCNetworkServiceCopyAll(prefs)) };
 
-        array.iter()
-             .map(|item| item.downcast::<SCNetworkService>().unwrap())
-             .collect::<Vec<SCNetworkService>>()
+        array
+            .iter()
+            .map(|item| item.downcast::<SCNetworkService>().unwrap())
+            .collect::<Vec<SCNetworkService>>()
     }
 
     /// Returns the user-specified ordering of network services within the specified set.
@@ -152,7 +150,12 @@ impl SCNetworkService {
 
         for item in array.iter() {
             if let Some(id) = item.downcast::<CFString>() {
-                let service_ref = unsafe { CFType::wrap_under_get_rule(SCNetworkServiceCopy(prefs, id.as_concrete_TypeRef() )) };
+                let service_ref = unsafe {
+                    CFType::wrap_under_get_rule(SCNetworkServiceCopy(
+                        prefs,
+                        id.as_concrete_TypeRef(),
+                    ))
+                };
                 if let Some(serv) = service_ref.downcast::<SCNetworkService>() {
                     services.push(serv);
                 }
@@ -180,7 +183,6 @@ impl SCNetworkService {
 
     /// Returns the DNS infomation on this network service
     pub fn dns(&self, store: &SCDynamicStore) -> SCNetworkServiceDns {
-
         let query = |path: String| -> DnsSetting {
             let mut dns_domain_name: Option<String> = None;
             let mut dns_server_addresses: Option<Vec<IpAddr>> = None;
@@ -224,17 +226,15 @@ impl SCNetworkService {
             }
         };
 
-        let state_dns_setting =
-            query(format!("State:/Network/Service/{}/DNS", self.id()));
-        let setup_dns_setting =
-            query(format!("Setup:/Network/Service/{}/DNS", self.id()));
+        let state_dns_setting = query(format!("State:/Network/Service/{}/DNS", self.id()));
+        let setup_dns_setting = query(format!("Setup:/Network/Service/{}/DNS", self.id()));
 
         SCNetworkServiceDns {
             state: state_dns_setting,
-            setup: setup_dns_setting
+            setup: setup_dns_setting,
         }
     }
-    
+
     /// Setting DNS Domain Name on this network service
     pub fn set_dns_domain_name(&self, store: &SCDynamicStore, domain_name: Option<String>) -> bool {
         let key = CFString::from_static_string("DomainName");
@@ -247,11 +247,18 @@ impl SCNetworkService {
     }
 
     /// Setting DNS Server Addresses on this network service
-    pub fn set_dns_server_addresses(&self, store: &SCDynamicStore, server_addrs: Option<Vec<IpAddr>>) -> bool {
+    pub fn set_dns_server_addresses(
+        &self,
+        store: &SCDynamicStore,
+        server_addrs: Option<Vec<IpAddr>>,
+    ) -> bool {
         let key = CFString::from_static_string("ServerAddresses");
         let addrs: Vec<CFString> = match server_addrs {
-            Some(addrs) => addrs.iter().map(|s| CFString::new(&format!("{}", s))).collect(),
-            None => vec![ CFString::new("Empty") ]
+            Some(addrs) => addrs
+                .iter()
+                .map(|s| CFString::new(&format!("{}", s)))
+                .collect(),
+            None => vec![CFString::new("Empty")],
         };
         let value = CFArray::from_CFTypes(&addrs);
         let dictionary = CFDictionary::from_CFType_pairs(&[(key, value)]);
@@ -263,7 +270,8 @@ impl SCNetworkService {
 
     /// Returns the network interface associated with this network service.
     pub fn interface(&self) -> Option<SCNetworkInterface> {
-        let interface_ref = unsafe { CFType::wrap_under_get_rule(SCNetworkServiceGetInterface(self.0)) };
+        let interface_ref =
+            unsafe { CFType::wrap_under_get_rule(SCNetworkServiceGetInterface(self.0)) };
         interface_ref.downcast::<SCNetworkInterface>()
     }
 }
@@ -306,9 +314,10 @@ impl SCNetworkInterface {
         let array: CFArray<CFType> =
             unsafe { CFArray::wrap_under_get_rule(SCNetworkInterfaceCopyAll()) };
 
-        array.iter()
-             .map(|item| item.downcast::<SCNetworkInterface>().unwrap() )
-             .collect::<Vec<SCNetworkInterface>>()
+        array
+            .iter()
+            .map(|item| item.downcast::<SCNetworkInterface>().unwrap())
+            .collect::<Vec<SCNetworkInterface>>()
     }
 
     /// Returns the current MTU setting and the range of allowable values
