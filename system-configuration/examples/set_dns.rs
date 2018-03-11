@@ -1,9 +1,16 @@
+extern crate core_foundation;
 extern crate system_configuration;
+
+use core_foundation::base::kCFAllocatorDefault;
+
 
 use system_configuration::dynamic_store::SCDynamicStoreBuilder;
 use system_configuration::network_configuration::SCNetworkService;
+use system_configuration::preferences::SCPreferences;
+
 
 use std::net::{IpAddr, Ipv4Addr};
+
 
 // This example will change the DNS settings on the primary
 // network interface to 8.8.8.8 and 8.8.4.4
@@ -19,9 +26,12 @@ fn main() {
         IpAddr::V4(Ipv4Addr::new(8, 8, 4, 4)),
     ];
 
-    let store = SCDynamicStoreBuilder::new("session_name").build();
+    let session_name = "session_name";
+    let store = SCDynamicStoreBuilder::new(session_name).build();
+    let prefs = SCPreferences::new(unsafe { kCFAllocatorDefault }, session_name, None);
 
-    let global_service = SCNetworkService::global(&store).expect("No PrimaryService active");
+    let global_service =
+        SCNetworkService::global(&prefs, &store).expect("No PrimaryService active");
     let global_interface = global_service
         .interface()
         .expect("No PrimaryInterface active");
@@ -46,9 +56,7 @@ fn main() {
     );
 
     // Check
-    // networksetup -getdnsservers "Wi-Fi"
-    // scutil --dns
-    // dig
+    // `networksetup -getdnsservers "Wi-Fi"` Or `scutil --dns` Or `dig`
     println!("{:?}", global_service.dns(&store));
 
     println!(

@@ -12,17 +12,18 @@
 //!
 //! [`SCNetworkConfiguration`]: https://developer.apple.com/documentation/systemconfiguration/scnetworkconfiguration
 
+
 use core_foundation::array::CFArray;
 use core_foundation::base::{CFType, TCFType};
-use core_foundation::base::kCFAllocatorDefault;
 use core_foundation::dictionary::CFDictionary;
 use core_foundation::string::CFString;
 
 use dynamic_store::SCDynamicStore;
-pub use system_configuration_sys::network_configuration::*;
-use system_configuration_sys::preferences::SCPreferencesCreate;
+use preferences::SCPreferences;
 
-use std::{fmt, ptr};
+pub use system_configuration_sys::network_configuration::*;
+
+use std::fmt;
 use std::net::IpAddr;
 
 /// MTU
@@ -100,30 +101,34 @@ impl_TCFType!(
 
 impl SCNetworkService {
     /// Returns primary network service
-    pub fn global(store: &SCDynamicStore) -> Option<Self> {
-        if let Some(service_id) = global_query(store, "PrimaryService") {
-            for service in SCNetworkService::list() {
-                if service.id() == service_id {
-                    return Some(service);
-                }
-            }
+    pub fn global(prefs: &SCPreferences, store: &SCDynamicStore) -> Option<Self> {
+        match global_query(store, "PrimaryService") {
+            Some(service_id) => SCNetworkService::from_id(prefs, &service_id),
+            None => None,
         }
-
-        return None;
     }
 
-    /// Returns all available network services for the specified preferences.
-    pub fn list() -> Vec<SCNetworkService> {
-        let prefs = unsafe {
-            SCPreferencesCreate(
-                kCFAllocatorDefault,
-                CFString::from_static_string("ns_list").as_concrete_TypeRef(),
-                ptr::null(),
+    /// Returns network service for the specified preferences session and service ID.
+    pub fn from_id(prefs: &SCPreferences, service_id: &str) -> Option<SCNetworkService> {
+        let network_service_ref = unsafe {
+            SCNetworkServiceCopy(
+                prefs.as_concrete_TypeRef(),
+                CFString::new(service_id).as_concrete_TypeRef(),
             )
         };
 
-        let array: CFArray<CFType> =
-            unsafe { CFArray::wrap_under_get_rule(SCNetworkServiceCopyAll(prefs)) };
+        if network_service_ref.is_null() {
+            None
+        } else {
+            Some(unsafe { SCNetworkService::wrap_under_get_rule(network_service_ref) })
+        }
+    }
+
+    /// Returns all available network services for the specified preferences.
+    pub fn list(prefs: &SCPreferences) -> Vec<SCNetworkService> {
+        let array: CFArray<CFType> = unsafe {
+            CFArray::wrap_under_get_rule(SCNetworkServiceCopyAll(prefs.as_concrete_TypeRef()))
+        };
 
         array
             .iter()
@@ -131,17 +136,10 @@ impl SCNetworkService {
             .collect::<Vec<SCNetworkService>>()
     }
 
-    /// Returns the user-specified ordering of network services within the specified set.
-    pub fn list_order() -> Vec<SCNetworkService> {
-        let prefs = unsafe {
-            SCPreferencesCreate(
-                kCFAllocatorDefault,
-                CFString::from_static_string("ns_list_order").as_concrete_TypeRef(),
-                ptr::null(),
-            )
-        };
-
-        let netset = unsafe { SCNetworkSetCopyCurrent(prefs) };
+    /// Returns the user-specified ordering of network services within the specified
+    /// preferences.
+    pub fn list_order(prefs: &SCPreferences) -> Vec<SCNetworkService> {
+        let netset = unsafe { SCNetworkSetCopyCurrent(prefs.as_concrete_TypeRef()) };
 
         let array: CFArray<CFType> =
             unsafe { CFArray::wrap_under_get_rule(SCNetworkSetGetServiceOrder(netset)) };
@@ -150,13 +148,8 @@ impl SCNetworkService {
 
         for item in array.iter() {
             if let Some(id) = item.downcast::<CFString>() {
-                let service_ref = unsafe {
-                    CFType::wrap_under_get_rule(SCNetworkServiceCopy(
-                        prefs,
-                        id.as_concrete_TypeRef(),
-                    ))
-                };
-                if let Some(serv) = service_ref.downcast::<SCNetworkService>() {
+                println!("id: {:?}", id);
+                if let Some(serv) = SCNetworkService::from_id(prefs, id.to_string().as_str()) {
                     services.push(serv);
                 }
             }
