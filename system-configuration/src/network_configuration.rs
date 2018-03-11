@@ -134,6 +134,16 @@ impl SCNetworkService {
             .iter()
             .map(|item| item.downcast::<SCNetworkService>().unwrap())
             .collect::<Vec<SCNetworkService>>()
+
+
+        // let array: CFArray<SCNetworkService> = unsafe {
+        //     CFArray::wrap_under_get_rule(SCNetworkServiceCopyAll(prefs.as_concrete_TypeRef()))
+        // };
+        
+        // array
+        //     .iter()
+        //     .map(|item| item.as_CFType().downcast::<SCNetworkService>().unwrap())
+        //     .collect::<Vec<SCNetworkService>>()
     }
 
     /// Returns the user-specified ordering of network services within the specified
@@ -148,7 +158,6 @@ impl SCNetworkService {
 
         for item in array.iter() {
             if let Some(id) = item.downcast::<CFString>() {
-                println!("id: {:?}", id);
                 if let Some(serv) = SCNetworkService::from_id(prefs, id.to_string().as_str()) {
                     services.push(serv);
                 }
