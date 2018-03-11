@@ -414,3 +414,23 @@ impl fmt::Debug for SCNetworkInterface {
         )
     }
 }
+
+
+#[test]
+fn test_network_service() {
+    use core_foundation::base::kCFAllocatorDefault;
+
+    let prefs = SCPreferences::new(unsafe { kCFAllocatorDefault }, "test_session", None);
+    let list = SCNetworkService::list(&prefs);
+
+    for network_service in list.iter() {
+        let network_service_id = network_service.id();
+        let res = SCNetworkService::from_id(&prefs, &network_service_id);
+        
+        assert!(res.is_some());
+        let res = res.unwrap();
+        
+        assert_eq!(res.id(), network_service.id());
+        assert_eq!(res.name(), network_service.name());
+    }
+}
