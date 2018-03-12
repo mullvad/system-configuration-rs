@@ -13,8 +13,7 @@
 //! [`SCPreferences`]: https://developer.apple.com/documentation/systemconfiguration/scpreferences
 
 
-use core_foundation::base::CFAllocatorRef;
-use core_foundation::base::TCFType;
+use core_foundation::base::{CFAllocatorRef, TCFType};
 use core_foundation::string::CFString;
 
 pub use system_configuration_sys::preferences::*;
@@ -31,18 +30,37 @@ impl_TCFType!(SCPreferences, SCPreferencesRef, SCPreferencesGetTypeID);
 
 
 impl SCPreferences {
-    /// Initiates access to the per-system set of configuration preferences.
-    pub fn new(allocator: CFAllocatorRef, name: &str, prefs_id: Option<&str>) -> Self {
-        let prefs_id = match prefs_id {
-            Some(prefs_id) => CFString::new(prefs_id).as_concrete_TypeRef(),
+    /// Initiates access to the default system preferences using the default allocator.
+    pub fn default(calling_process_name: &CFString) -> Self {
+        Self::with_allocator(ptr::null(), calling_process_name, None)
+    }
+
+    /// Initiates access to the given (`prefs_id`) group of configuration preferences using the
+    /// default allocator. To access the default system preferences, use the [`default`]
+    /// constructor.
+    ///
+    /// [`default`]: #method.default
+    pub fn group(calling_process_name: &CFString, prefs_id: &CFString) -> Self {
+        Self::with_allocator(ptr::null(), calling_process_name, Some(prefs_id))
+    }
+
+    /// Initiates access to the per-system set of configuration preferences with a given
+    /// allocator and preference group to access.
+    pub fn with_allocator(
+        allocator: CFAllocatorRef,
+        calling_process_name: &CFString,
+        prefs_id: Option<&CFString>,
+    ) -> Self {
+        let prefs_id_ptr = match prefs_id {
+            Some(prefs_id) => prefs_id.as_concrete_TypeRef(),
             None => ptr::null(),
         };
 
         unsafe {
             SCPreferences::wrap_under_get_rule(SCPreferencesCreate(
                 allocator,
-                CFString::new(name).as_concrete_TypeRef(),
-                prefs_id,
+                calling_process_name.as_concrete_TypeRef(),
+                prefs_id_ptr,
             ))
         }
     }
