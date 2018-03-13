@@ -57,11 +57,23 @@ impl SCPreferences {
         };
 
         unsafe {
-            SCPreferences::wrap_under_get_rule(SCPreferencesCreate(
+            SCPreferences::wrap_under_create_rule(SCPreferencesCreate(
                 allocator,
                 calling_process_name.as_concrete_TypeRef(),
                 prefs_id_ptr,
             ))
         }
+    }
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn retain_count() {
+        let preferences = SCPreferences::default(&CFString::new("test"));
+        assert_eq!(preferences.retain_count(), 1);
     }
 }
