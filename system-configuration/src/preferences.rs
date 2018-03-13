@@ -10,7 +10,7 @@
 //!
 //! See the examples directory for examples how to use this module.
 //!
-//! [`SCPreferences`]: https://developer.apple.com/documentation/systemconfiguration/scpreferences
+//! [`SCPreferences`]: https://developer.apple.com/documentation/systemconfiguration/scpreferences-ft8
 
 
 use core_foundation::base::{CFAllocatorRef, TCFType};
@@ -45,7 +45,10 @@ impl SCPreferences {
     }
 
     /// Initiates access to the per-system set of configuration preferences with a given
-    /// allocator and preference group to access.
+    /// allocator and preference group to access. See the underlying [SCPreferencesCreate] function
+    /// documentation for details.
+    ///
+    /// [SCPreferencesCreate]: https://developer.apple.com/documentation/systemconfiguration/1516807-scpreferencescreate?language=objc
     pub fn with_allocator(
         allocator: CFAllocatorRef,
         calling_process_name: &CFString,
