@@ -13,7 +13,7 @@
 //! [`SCPreferences`]: https://developer.apple.com/documentation/systemconfiguration/scpreferences-ft8
 
 
-use core_foundation::base::{CFAllocatorRef, TCFType};
+use core_foundation::base::{CFAllocator, TCFType};
 use core_foundation::string::CFString;
 
 pub use system_configuration_sys::preferences::*;
@@ -32,7 +32,7 @@ impl_TCFType!(SCPreferences, SCPreferencesRef, SCPreferencesGetTypeID);
 impl SCPreferences {
     /// Initiates access to the default system preferences using the default allocator.
     pub fn default(calling_process_name: &CFString) -> Self {
-        Self::with_allocator(ptr::null(), calling_process_name, None)
+        Self::new(None, calling_process_name, None)
     }
 
     /// Initiates access to the given (`prefs_id`) group of configuration preferences using the
@@ -41,29 +41,36 @@ impl SCPreferences {
     ///
     /// [`default`]: #method.default
     pub fn group(calling_process_name: &CFString, prefs_id: &CFString) -> Self {
-        Self::with_allocator(ptr::null(), calling_process_name, Some(prefs_id))
+        Self::new(None, calling_process_name, Some(prefs_id))
     }
 
     /// Initiates access to the per-system set of configuration preferences with a given
     /// allocator and preference group to access. See the underlying [SCPreferencesCreate] function
-    /// documentation for details.
+    /// documentation for details. Use the helper constructors [`default`] and [`group`] to easier
+    /// create an instance using the default allocator.
     ///
     /// [SCPreferencesCreate]: https://developer.apple.com/documentation/systemconfiguration/1516807-scpreferencescreate?language=objc
-    pub fn with_allocator(
-        allocator: CFAllocatorRef,
+    /// [`default`]: #method.default
+    /// [`group`]: #method.group
+    pub fn new(
+        allocator: Option<&CFAllocator>,
         calling_process_name: &CFString,
         prefs_id: Option<&CFString>,
     ) -> Self {
-        let prefs_id_ptr = match prefs_id {
+        let allocator_ref = match allocator {
+            Some(allocator) => allocator.as_concrete_TypeRef(),
+            None => ptr::null(),
+        };
+        let prefs_id_ref = match prefs_id {
             Some(prefs_id) => prefs_id.as_concrete_TypeRef(),
             None => ptr::null(),
         };
 
         unsafe {
             SCPreferences::wrap_under_create_rule(SCPreferencesCreate(
-                allocator,
+                allocator_ref,
                 calling_process_name.as_concrete_TypeRef(),
-                prefs_id_ptr,
+                prefs_id_ref,
             ))
         }
     }
