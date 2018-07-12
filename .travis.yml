@@ -4,12 +4,13 @@ rust:
   - nightly
   - stable
   - beta
+  - 1.20.0
 os:
   - osx
 
 script:
-  - cargo build --verbose
-  - cargo test --verbose
+  - cargo build --all --verbose
+  - cargo test --all --verbose
   - if [ "${TRAVIS_RUST_VERSION}" = "nightly" ]; then
       rustup component add rustfmt-preview;
       rustfmt --version;
