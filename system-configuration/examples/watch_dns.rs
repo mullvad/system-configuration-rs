@@ -6,11 +6,12 @@ use core_foundation::array::CFArray;
 use core_foundation::base::{CFType, TCFType};
 use core_foundation::dictionary::CFDictionary;
 use core_foundation::propertylist::CFPropertyList;
-use core_foundation::runloop::{CFRunLoop, kCFRunLoopCommonModes};
+use core_foundation::runloop::{kCFRunLoopCommonModes, CFRunLoop};
 use core_foundation::string::CFString;
 
-use system_configuration::dynamic_store::{SCDynamicStore, SCDynamicStoreBuilder,
-                                          SCDynamicStoreCallBackContext};
+use system_configuration::dynamic_store::{
+    SCDynamicStore, SCDynamicStoreBuilder, SCDynamicStoreCallBackContext,
+};
 
 // This example will watch the dynamic store for changes to any DNS setting. As soon as a change
 // is detected, it will be printed to stdout.
