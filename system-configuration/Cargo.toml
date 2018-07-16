@@ -11,5 +11,7 @@ readme = "../README.md"
 
 [dependencies]
 core-foundation = "0.5"
-
 system-configuration-sys = { path = "../system-configuration-sys", version = "0.1" }
+
+[features]
+nightly = []
