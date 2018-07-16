@@ -13,7 +13,7 @@
 //! [`SCDynamicStore`]: https://developer.apple.com/documentation/systemconfiguration/scdynamicstore?language=objc
 
 use core_foundation::array::{CFArray, CFArrayRef};
-use core_foundation::base::{TCFType, kCFAllocatorDefault};
+use core_foundation::base::{kCFAllocatorDefault, TCFType};
 use core_foundation::boolean::CFBoolean;
 use core_foundation::dictionary::CFDictionary;
 use core_foundation::propertylist::{CFPropertyList, CFPropertyListSubClass};
