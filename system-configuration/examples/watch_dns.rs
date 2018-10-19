@@ -1,16 +1,17 @@
+extern crate core_foundation;
 extern crate system_configuration;
 
-extern crate core_foundation;
-
-use core_foundation::array::CFArray;
-use core_foundation::base::{CFType, TCFType};
-use core_foundation::dictionary::CFDictionary;
-use core_foundation::propertylist::CFPropertyList;
-use core_foundation::runloop::{kCFRunLoopCommonModes, CFRunLoop};
-use core_foundation::string::CFString;
-
-use system_configuration::dynamic_store::{
-    SCDynamicStore, SCDynamicStoreBuilder, SCDynamicStoreCallBackContext,
+use core_foundation::{
+    array::CFArray,
+    base::{CFType, TCFType, ToVoid},
+    dictionary::CFDictionary,
+    propertylist::CFPropertyList,
+    runloop::{kCFRunLoopCommonModes, CFRunLoop},
+    string::CFString,
+};
+use system_configuration::{
+    dynamic_store::{SCDynamicStore, SCDynamicStoreBuilder, SCDynamicStoreCallBackContext},
+    sys::schema_definitions::kSCPropNetDNSServerAddresses,
 };
 
 // This example will watch the dynamic store for changes to any DNS setting. As soon as a change
@@ -57,7 +58,6 @@ fn my_callback(store: SCDynamicStore, changed_keys: CFArray<CFString>, context: 
 
     for key in changed_keys.iter() {
         if let Some(addresses) = get_dns(&store, key.clone()) {
-            let addresses = addresses.iter().map(|s| s.to_string()).collect::<Vec<_>>();
             println!("{} changed DNS to {:?}", *key, addresses);
         } else {
             println!("{} removed DNS", *key);
@@ -65,16 +65,19 @@ fn my_callback(store: SCDynamicStore, changed_keys: CFArray<CFString>, context: 
     }
 }
 
-fn get_dns(store: &SCDynamicStore, path: CFString) -> Option<CFArray<CFString>> {
-    let dictionary = store
+fn get_dns(store: &SCDynamicStore, path: CFString) -> Option<Vec<String>> {
+    let dns_settings = store
         .get(path)
-        .and_then(CFPropertyList::downcast_into::<CFDictionary>);
-    if let Some(dictionary) = dictionary {
-        dictionary
-            .find2(&CFString::from_static_string("ServerAddresses"))
-            .map(|ptr| unsafe { CFType::wrap_under_get_rule(ptr) })
-            .and_then(CFType::downcast_into::<CFArray<CFString>>)
-    } else {
-        None
+        .and_then(CFPropertyList::downcast_into::<CFDictionary>)?;
+    let address_array = dns_settings
+        .find(unsafe { kSCPropNetDNSServerAddresses }.to_void())
+        .map(|ptr| unsafe { CFType::wrap_under_get_rule(*ptr) })
+        .and_then(CFType::downcast_into::<CFArray>)?;
+    let mut result = Vec::with_capacity(address_array.len() as usize);
+    for address_ptr in &address_array {
+        let address =
+            unsafe { CFType::wrap_under_get_rule(*address_ptr) }.downcast_into::<CFString>()?;
+        result.push(address.to_string())
     }
+    Some(result)
 }

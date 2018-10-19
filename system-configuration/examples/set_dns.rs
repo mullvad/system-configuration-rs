@@ -2,13 +2,17 @@ extern crate system_configuration;
 
 extern crate core_foundation;
 
-use core_foundation::array::CFArray;
-use core_foundation::base::TCFType;
-use core_foundation::dictionary::CFDictionary;
-use core_foundation::propertylist::CFPropertyList;
-use core_foundation::string::{CFString, CFStringRef};
-
-use system_configuration::dynamic_store::{SCDynamicStore, SCDynamicStoreBuilder};
+use core_foundation::{
+    array::CFArray,
+    base::{TCFType, ToVoid},
+    dictionary::CFDictionary,
+    propertylist::CFPropertyList,
+    string::{CFString, CFStringRef},
+};
+use system_configuration::{
+    dynamic_store::{SCDynamicStore, SCDynamicStoreBuilder},
+    sys::schema_definitions::{kSCDynamicStorePropNetPrimaryService, kSCPropNetDNSServerAddresses},
+};
 
 // This example will change the DNS settings on the primary
 // network interface to 8.8.8.8 and 8.8.4.4
@@ -36,18 +40,15 @@ fn main() {
 fn get_primary_service_uuid(store: &SCDynamicStore) -> Option<CFString> {
     let dictionary = store
         .get("State:/Network/Global/IPv4")
-        .and_then(CFPropertyList::downcast_into::<CFDictionary>);
-    if let Some(dictionary) = dictionary {
-        dictionary
-            .find2(&CFString::from_static_string("PrimaryService"))
-            .map(|ptr| unsafe { CFString::wrap_under_get_rule(ptr as CFStringRef) })
-    } else {
-        None
-    }
+        .and_then(CFPropertyList::downcast_into::<CFDictionary>)?;
+    dictionary
+        .find(unsafe { kSCDynamicStorePropNetPrimaryService }.to_void())
+        .map(|ptr| unsafe { CFString::wrap_under_get_rule(*ptr as CFStringRef) })
 }
 
 fn create_dns_dictionary(addresses: &[CFString]) -> CFDictionary {
-    let key = CFString::from_static_string("ServerAddresses");
+    let key = unsafe { CFString::wrap_under_get_rule(kSCPropNetDNSServerAddresses) };
     let value = CFArray::from_CFTypes(addresses);
-    CFDictionary::from_CFType_pairs(&[(key, value)])
+    let typed_dict = CFDictionary::from_CFType_pairs(&[(key, value)]);
+    unsafe { CFDictionary::wrap_under_get_rule(typed_dict.as_concrete_TypeRef()) }
 }

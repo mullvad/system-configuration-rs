@@ -34,6 +34,7 @@ Line wrap the file at 100 chars.                                              Th
 - Publicly re-export `system_configuration_sys` as `system_configuration::sys` instead of
   re-exporting each sys module under their corresponding safe level module.
 - Raise minimum Rust version to 1.25 in order to use nested import groups.
+- Upgrade `core-foundation` dependency from 0.5 to 0.6.
 
 
 ## [0.1.0] - 2018-02-01
