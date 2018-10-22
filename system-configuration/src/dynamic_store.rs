@@ -12,18 +12,25 @@
 //!
 //! [`SCDynamicStore`]: https://developer.apple.com/documentation/systemconfiguration/scdynamicstore?language=objc
 
-use core_foundation::array::{CFArray, CFArrayRef};
-use core_foundation::base::{kCFAllocatorDefault, TCFType};
-use core_foundation::boolean::CFBoolean;
-use core_foundation::dictionary::CFDictionary;
-use core_foundation::propertylist::{CFPropertyList, CFPropertyListSubClass};
-use core_foundation::runloop::CFRunLoopSource;
-use core_foundation::string::CFString;
-
-pub use system_configuration_sys::dynamic_store::*;
-use system_configuration_sys::libc::c_void;
-
+use core_foundation::{
+    array::{CFArray, CFArrayRef},
+    base::{kCFAllocatorDefault, TCFType},
+    boolean::CFBoolean,
+    dictionary::CFDictionary,
+    propertylist::{CFPropertyList, CFPropertyListSubClass},
+    runloop::CFRunLoopSource,
+    string::CFString,
+};
 use std::ptr;
+use sys::{
+    dynamic_store::{
+        kSCDynamicStoreUseSessionKeys, SCDynamicStoreCallBack, SCDynamicStoreContext,
+        SCDynamicStoreCopyKeyList, SCDynamicStoreCopyValue, SCDynamicStoreCreateRunLoopSource,
+        SCDynamicStoreCreateWithOptions, SCDynamicStoreGetTypeID, SCDynamicStoreRef,
+        SCDynamicStoreRemoveValue, SCDynamicStoreSetNotificationKeys, SCDynamicStoreSetValue,
+    },
+    libc::c_void,
+};
 
 /// Struct describing the callback happening when a watched value in the dynamic store is changed.
 pub struct SCDynamicStoreCallBackContext<T> {

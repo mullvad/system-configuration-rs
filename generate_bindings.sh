@@ -13,10 +13,12 @@ FRAMEWORK_PATH="$SDK_PATH/System/Library/Frameworks/"
 PREFERENCES_HEADER_PATH="$FRAMEWORK_PATH/SystemConfiguration.framework/Headers/SCPreferences.h"
 DYNAMIC_STORE_HEADER_PATH="$FRAMEWORK_PATH/SystemConfiguration.framework/Headers/SCDynamicStore.h"
 NETWORK_CONFIGURATION_HEADER_PATH="$FRAMEWORK_PATH/SystemConfiguration.framework/Headers/SCNetworkConfiguration.h"
+SCHEMA_DEFINITIONS_HEADER_PATH="$FRAMEWORK_PATH/SystemConfiguration.framework/Headers/SCSchemaDefinitions.h"
 
 PREFERENCES_BINDING_PATH="./system-configuration-sys/src/preferences.rs"
 DYNAMIC_STORE_BINDING_PATH="./system-configuration-sys/src/dynamic_store.rs"
 NETWORK_CONFIGURATION_BINDING_PATH="./system-configuration-sys/src/network_configuration.rs"
+SCHEMA_DEFINITIONS_BINDING_PATH="./system-configuration-sys/src/schema_definitions.rs"
 
 BINDGEN_VERSION=`bindgen --version`
 
@@ -129,3 +131,25 @@ bindgen \
     -F$FRAMEWORK_PATH
 
 rustfmt $NETWORK_CONFIGURATION_BINDING_PATH
+
+echo ""
+echo ""
+echo "Generating bindings for $SCHEMA_DEFINITIONS_HEADER_PATH"
+sleep 2
+
+bindgen \
+    --no-doc-comments \
+    --whitelist-var "kSC.*" \
+    --blacklist-type "(__)?CF.*" \
+    --raw-line "// Generated using:" \
+    --raw-line "// $BINDGEN_VERSION" \
+    --raw-line "// macOS SDK $SDK_VERSION." \
+    --raw-line "" \
+    --raw-line "use core_foundation_sys::string::CFStringRef;" \
+    --raw-line "" \
+    -o $SCHEMA_DEFINITIONS_BINDING_PATH \
+    $SCHEMA_DEFINITIONS_HEADER_PATH -- \
+    -I$SDK_PATH/usr/include \
+    -F$FRAMEWORK_PATH
+
+rustfmt $SCHEMA_DEFINITIONS_BINDING_PATH

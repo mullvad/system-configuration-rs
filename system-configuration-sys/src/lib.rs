@@ -26,3 +26,4 @@ pub type dispatch_queue_t = *mut libc::c_void;
 pub mod dynamic_store;
 pub mod network_configuration;
 pub mod preferences;
+pub mod schema_definitions;

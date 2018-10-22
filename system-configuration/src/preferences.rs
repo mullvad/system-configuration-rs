@@ -15,10 +15,8 @@
 
 use core_foundation::base::{CFAllocator, TCFType};
 use core_foundation::string::CFString;
-
-pub use system_configuration_sys::preferences::*;
-
 use std::ptr;
+use sys::preferences::{SCPreferencesCreate, SCPreferencesGetTypeID, SCPreferencesRef};
 
 
 declare_TCFType!{
