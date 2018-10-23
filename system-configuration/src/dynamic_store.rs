@@ -119,7 +119,8 @@ impl<T> SCDynamicStoreBuilder<T> {
     fn create_store_options(&self) -> CFDictionary {
         let key = unsafe { CFString::wrap_under_create_rule(kSCDynamicStoreUseSessionKeys) };
         let value = CFBoolean::from(self.session_keys);
-        CFDictionary::from_CFType_pairs(&[(key, value)])
+        let typed_dict = CFDictionary::from_CFType_pairs(&[(key, value)]);
+        unsafe { CFDictionary::wrap_under_get_rule(typed_dict.as_concrete_TypeRef()) }
     }
 
     fn create_context(
