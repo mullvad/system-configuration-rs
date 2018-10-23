@@ -1,6 +1,6 @@
 [package]
 name = "system-configuration-sys"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Mullvad VPN <admin@mullvad.net>", "Linus Färnstrand <linus@mullvad.net>", "Andrej Mihajlov <and@mullvad.net>"]
 description = "Low level bindings to SystemConfiguration framework for macOS"
 keywords = ["macos", "system", "configuration", "bindings"]

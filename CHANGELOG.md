@@ -22,6 +22,9 @@ Line wrap the file at 100 chars.                                              Th
 
 
 ## [Unreleased]
+
+
+## [0.2.0] - 2018-10-23
 ### Added
 - Publicly re-export `libc` and `core_foundation_sys` from `system_configuration_sys`.
 - Publicly re-export `core_foundation` from `system_configuration`
