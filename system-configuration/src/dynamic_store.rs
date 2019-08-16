@@ -25,9 +25,10 @@ use std::ptr;
 use sys::{
     dynamic_store::{
         kSCDynamicStoreUseSessionKeys, SCDynamicStoreCallBack, SCDynamicStoreContext,
-        SCDynamicStoreCopyKeyList, SCDynamicStoreCopyValue, SCDynamicStoreCreateRunLoopSource,
-        SCDynamicStoreCreateWithOptions, SCDynamicStoreGetTypeID, SCDynamicStoreRef,
-        SCDynamicStoreRemoveValue, SCDynamicStoreSetNotificationKeys, SCDynamicStoreSetValue,
+        SCDynamicStoreCopyKeyList, SCDynamicStoreCopyProxies, SCDynamicStoreCopyValue,
+        SCDynamicStoreCreateRunLoopSource, SCDynamicStoreCreateWithOptions,
+        SCDynamicStoreGetTypeID, SCDynamicStoreRef, SCDynamicStoreRemoveValue,
+        SCDynamicStoreSetNotificationKeys, SCDynamicStoreSetValue,
     },
     libc::c_void,
 };
@@ -187,6 +188,19 @@ impl SCDynamicStore {
             );
             if array_ref != ptr::null() {
                 Some(CFArray::wrap_under_create_rule(array_ref))
+            } else {
+                None
+            }
+        }
+    }
+
+    /// Returns the key-value pairs that represent the current internet proxy settings. Or `None` if
+    /// no proxy settings have been defined or if an error occured.
+    pub fn get_proxies(&self) -> Option<CFDictionary> {
+        unsafe {
+            let dictionary_ref = SCDynamicStoreCopyProxies(self.as_concrete_TypeRef());
+            if dictionary_ref != ptr::null() {
+                Some(CFDictionary::wrap_under_create_rule(dictionary_ref))
             } else {
                 None
             }

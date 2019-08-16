@@ -33,6 +33,17 @@ pub type SCDynamicStoreCallBack = Option<
 #[link(name = "SystemConfiguration", kind = "framework")]
 extern "C" {
     pub static mut kSCDynamicStoreUseSessionKeys: CFStringRef;
+    pub static mut kSCDynamicStoreProxiesExceptionList: CFStringRef;
+    pub static mut kSCDynamicStoreProxiesHTTPEnable: CFStringRef;
+    pub static mut kSCDynamicStoreProxiesHTTPProxy: CFStringRef;
+    pub static mut kSCDynamicStoreProxiesHTTPPort: CFStringRef;
+    pub static mut kSCDynamicStoreProxiesHTTPSEnable: CFStringRef;
+    pub static mut kSCDynamicStoreProxiesHTTPSProxy: CFStringRef;
+    pub static mut kSCDynamicStoreProxiesHTTPSPort: CFStringRef;
+    pub static mut kSCDynamicStoreProxiesFTPEnable: CFStringRef;
+    pub static mut kSCDynamicStoreProxiesFTPProxy: CFStringRef;
+    pub static mut kSCDynamicStoreProxiesFTPPort: CFStringRef;
+    pub static mut kSCDynamicStoreProxiesFTPPassive: CFStringRef;
 
     pub fn SCDynamicStoreGetTypeID() -> CFTypeID;
 
@@ -109,4 +120,6 @@ extern "C" {
     ) -> Boolean;
 
     pub fn SCDynamicStoreCopyNotifiedKeys(store: SCDynamicStoreRef) -> CFArrayRef;
+
+    pub fn SCDynamicStoreCopyProxies(store: SCDynamicStoreRef) -> CFDictionaryRef;
 }
