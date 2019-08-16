@@ -14,7 +14,7 @@
 
 use core_foundation::{
     array::{CFArray, CFArrayRef},
-    base::{kCFAllocatorDefault, TCFType},
+    base::{CFType, kCFAllocatorDefault, TCFType},
     boolean::CFBoolean,
     dictionary::CFDictionary,
     propertylist::{CFPropertyList, CFPropertyListSubClass},
@@ -196,7 +196,7 @@ impl SCDynamicStore {
 
     /// Returns the key-value pairs that represent the current internet proxy settings. Or `None` if
     /// no proxy settings have been defined or if an error occured.
-    pub fn get_proxies(&self) -> Option<CFDictionary> {
+    pub fn get_proxies(&self) -> Option<CFDictionary<CFString, CFType>> {
         unsafe {
             let dictionary_ref = SCDynamicStoreCopyProxies(self.as_concrete_TypeRef());
             if dictionary_ref != ptr::null() {

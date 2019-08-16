@@ -33,56 +33,6 @@ pub type SCDynamicStoreCallBack = Option<
 #[link(name = "SystemConfiguration", kind = "framework")]
 extern "C" {
     pub static mut kSCDynamicStoreUseSessionKeys: CFStringRef;
-    /// CFArray[CFString]
-    pub static mut kSCPropNetProxiesExceptionList: CFStringRef;
-    /// CFNumber (0 or 1)
-    pub static mut kSCPropNetProxiesExcludeSimpleHostnames: CFStringRef;
-    /// CFNumber (0 or 1)
-    pub static mut kSCPropNetProxiesFTPEnable: CFStringRef;
-    /// CFNumber (0 or 1)
-    pub static mut kSCPropNetProxiesFTPPassive: CFStringRef;
-    /// CFNumber
-    pub static mut kSCPropNetProxiesFTPPort: CFStringRef;
-    /// CFString
-    pub static mut kSCPropNetProxiesFTPProxy: CFStringRef;
-    /// CFNumber (0 or 1)
-    pub static mut kSCPropNetProxiesGopherEnable: CFStringRef;
-    /// CFNumber
-    pub static mut kSCPropNetProxiesGopherPort: CFStringRef;
-    /// CFString
-    pub static mut kSCPropNetProxiesGopherProxy: CFStringRef;
-    /// CFNumber (0 or 1)
-    pub static mut kSCPropNetProxiesHTTPEnable: CFStringRef;
-    /// CFNumber
-    pub static mut kSCPropNetProxiesHTTPPort: CFStringRef;
-    /// CFString
-    pub static mut kSCPropNetProxiesHTTPProxy: CFStringRef;
-    /// CFNumber (0 or 1)
-    pub static mut kSCPropNetProxiesHTTPSEnable: CFStringRef;
-    /// CFNumber
-    pub static mut kSCPropNetProxiesHTTPSPort: CFStringRef;
-    /// CFString
-    pub static mut kSCPropNetProxiesHTTPSProxy: CFStringRef;
-    /// CFNumber (0 or 1)
-    pub static mut kSCPropNetProxiesRTSPEnable: CFStringRef;
-    /// CFNumber
-    pub static mut kSCPropNetProxiesRTSPPort: CFStringRef;
-    /// CFString
-    pub static mut kSCPropNetProxiesRTSPProxy: CFStringRef;
-    /// CFNumber (0 or 1)
-    pub static mut kSCPropNetProxiesSOCKSEnable: CFStringRef;
-    /// CFNumber
-    pub static mut kSCPropNetProxiesSOCKSPort: CFStringRef;
-    /// CFString
-    pub static mut kSCPropNetProxiesSOCKSProxy: CFStringRef;
-    /// CFNumber (0 or 1)
-    pub static mut kSCPropNetProxiesProxyAutoConfigEnable: CFStringRef;
-    /// CFString
-    pub static mut kSCPropNetProxiesProxyAutoConfigJavaScript: CFStringRef;
-    /// CFString
-    pub static mut kSCPropNetProxiesProxyAutoConfigURLString: CFStringRef;
-    /// CFNumber (0 or 1)
-    pub static mut kSCPropNetProxiesProxyAutoDiscoveryEnable: CFStringRef;
 
     pub fn SCDynamicStoreGetTypeID() -> CFTypeID;
 
