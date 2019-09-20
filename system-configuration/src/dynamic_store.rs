@@ -25,11 +25,11 @@ use std::ptr;
 use sys::{
     dynamic_store::{
         kSCDynamicStoreUseSessionKeys, SCDynamicStoreCallBack, SCDynamicStoreContext,
-        SCDynamicStoreCopyKeyList, SCDynamicStoreCopyProxies, SCDynamicStoreCopyValue,
-        SCDynamicStoreCreateRunLoopSource, SCDynamicStoreCreateWithOptions,
-        SCDynamicStoreGetTypeID, SCDynamicStoreRef, SCDynamicStoreRemoveValue,
-        SCDynamicStoreSetNotificationKeys, SCDynamicStoreSetValue,
+        SCDynamicStoreCopyKeyList, SCDynamicStoreCopyValue, SCDynamicStoreCreateRunLoopSource,
+        SCDynamicStoreCreateWithOptions, SCDynamicStoreGetTypeID, SCDynamicStoreRef,
+        SCDynamicStoreRemoveValue, SCDynamicStoreSetNotificationKeys, SCDynamicStoreSetValue,
     },
+    dynamic_store_copy_specific::SCDynamicStoreCopyProxies,
     libc::c_void,
 };
 
