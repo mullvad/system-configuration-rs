@@ -29,6 +29,8 @@ echo ""
 echo "Generating bindings for $PREFERENCES_HEADER_PATH"
 bindgen \
     --no-doc-comments \
+    --use-core \
+    --ctypes-prefix "::libc" \
     --whitelist-function "SCPreferences.*" \
     --blacklist-type "(__)?CF.*" \
     --blacklist-type "Boolean" \
@@ -64,6 +66,8 @@ sleep 2
 
 bindgen \
     --no-doc-comments \
+    --use-core \
+    --ctypes-prefix "::libc" \
     --whitelist-function "SCDynamicStore.*" \
     --whitelist-var "kSCDynamicStore.*" \
     --blacklist-type "(__)?CF.*" \
@@ -95,6 +99,8 @@ sleep 2
 
 bindgen \
     --no-doc-comments \
+    --use-core \
+    --ctypes-prefix "::libc" \
     --whitelist-function "SCNetwork.*" \
     --whitelist-function "SCBondInterface.*" \
     --whitelist-var "kSC(NetworkInterface|BondStatus).*" \
@@ -115,7 +121,7 @@ bindgen \
     --raw-line "use core_foundation_sys::runloop::CFRunLoopRef;" \
     --raw-line "" \
     --raw-line "use dispatch_queue_t;" \
-    --raw-line "use libc::{c_void, c_char, c_int, sockaddr};" \
+    --raw-line "use libc::{c_void, sockaddr, socklen_t};" \
     --raw-line "use preferences::SCPreferencesRef;" \
     --raw-line "" \
     --raw-line "pub type __SCNetworkReachability = c_void;" \
@@ -139,6 +145,8 @@ sleep 2
 
 bindgen \
     --no-doc-comments \
+    --use-core \
+    --ctypes-prefix "::libc" \
     --whitelist-var "kSC.*" \
     --blacklist-type "(__)?CF.*" \
     --raw-line "// Generated using:" \
