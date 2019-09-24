@@ -30,8 +30,14 @@ echo ""
 function cleanup_binding() {
     local binding_path="$1"
 
+    # `Option` is in the Rust standard prelude. No need to use full path, it's just verbose.
     sed -i 's/::core::option::Option/Option/g' "$binding_path"
+
+    # The bindings that need these types will import them directly into scope with `--raw line`
     sed -i 's/::std::os::raw:://g' "$binding_path"
+
+    # Most low level types should not be `Copy` nor `Clone`. And `Debug` usually don't make much
+    # sense, since they are usually just pointers/binary data.
     sed -i '/#\[derive(Debug, Copy, Clone)\]/d' "$binding_path"
 
     # Change struct bodies to (c_void);
