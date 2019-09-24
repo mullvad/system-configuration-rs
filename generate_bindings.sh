@@ -59,20 +59,24 @@ function cleanup_binding() {
     }' "$binding_path"
 }
 
+BINDGEN_COMMON_ARGUMENTS=(
+    --no-doc-comments
+    --use-core
+    --no-layout-tests
+    --raw-line "// Generated using:"
+    --raw-line "// $BINDGEN_VERSION"
+    --raw-line "// macOS SDK $SDK_VERSION."
+    --raw-line ""
+)
+
 echo "Generating bindings for $PREFERENCES_HEADER_PATH"
 bindgen \
-    --no-doc-comments \
-    --use-core \
-    --no-layout-tests \
+    "${BINDGEN_COMMON_ARGUMENTS[@]}" \
     --whitelist-function "SCPreferences.*" \
     --blacklist-type "(__)?CF.*" \
     --blacklist-type "Boolean" \
     --blacklist-type "dispatch_queue_[ts]" \
     --blacklist-type "(AuthorizationOpaqueRef|__SCPreferences)" \
-    --raw-line "// Generated using:" \
-    --raw-line "// $BINDGEN_VERSION" \
-    --raw-line "// macOS SDK $SDK_VERSION." \
-    --raw-line "" \
     --raw-line "use core::ffi::c_void;" \
     --raw-line "use core_foundation_sys::array::CFArrayRef;" \
     --raw-line "use core_foundation_sys::base::{Boolean, CFIndex, CFAllocatorRef, CFTypeID};" \
@@ -99,18 +103,12 @@ echo "Generating bindings for $DYNAMIC_STORE_HEADER_PATH"
 sleep 2
 
 bindgen \
-    --no-doc-comments \
-    --use-core \
-    --no-layout-tests \
+    "${BINDGEN_COMMON_ARGUMENTS[@]}" \
     --whitelist-function "SCDynamicStore.*" \
     --whitelist-var "kSCDynamicStore.*" \
     --blacklist-type "(__)?CF.*" \
     --blacklist-type "Boolean" \
     --blacklist-type "dispatch_queue_[ts]" \
-    --raw-line "// Generated using:" \
-    --raw-line "// $BINDGEN_VERSION" \
-    --raw-line "// macOS SDK $SDK_VERSION." \
-    --raw-line "" \
     --raw-line "use core::ffi::c_void;" \
     --raw-line "use core_foundation_sys::array::CFArrayRef;" \
     --raw-line "use core_foundation_sys::base::{Boolean, CFIndex, CFAllocatorRef, CFTypeID};" \
@@ -134,9 +132,7 @@ echo "Generating bindings for $NETWORK_CONFIGURATION_HEADER_PATH"
 sleep 2
 
 bindgen \
-    --no-doc-comments \
-    --use-core \
-    --no-layout-tests \
+    "${BINDGEN_COMMON_ARGUMENTS[@]}" \
     --whitelist-function "SCNetwork.*" \
     --whitelist-function "SCBondInterface.*" \
     --whitelist-var "kSC(NetworkInterface|BondStatus).*" \
@@ -146,10 +142,6 @@ bindgen \
     --blacklist-type "Boolean" \
     --blacklist-type "(sockaddr|socklen_t|sa_family_t|__darwin_socklen_t|__uint.*_t)" \
     --blacklist-type "(__)?SCPreferences.*" \
-    --raw-line "// Generated using:" \
-    --raw-line "// $BINDGEN_VERSION" \
-    --raw-line "// macOS SDK $SDK_VERSION." \
-    --raw-line "" \
     --raw-line "use core::ffi::c_void;" \
     --raw-line "use core_foundation_sys::array::CFArrayRef;" \
     --raw-line "use core_foundation_sys::base::{Boolean, CFIndex, CFAllocatorRef, CFTypeID};" \
@@ -182,15 +174,9 @@ echo "Generating bindings for $SCHEMA_DEFINITIONS_HEADER_PATH"
 sleep 2
 
 bindgen \
-    --no-doc-comments \
-    --use-core \
-    --no-layout-tests \
+    "${BINDGEN_COMMON_ARGUMENTS[@]}" \
     --whitelist-var "kSC.*" \
     --blacklist-type "(__)?CF.*" \
-    --raw-line "// Generated using:" \
-    --raw-line "// $BINDGEN_VERSION" \
-    --raw-line "// macOS SDK $SDK_VERSION." \
-    --raw-line "" \
     --raw-line "use core_foundation_sys::string::CFStringRef;" \
     --raw-line "" \
     -o $SCHEMA_DEFINITIONS_BINDING_PATH \
