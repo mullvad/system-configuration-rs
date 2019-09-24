@@ -61,6 +61,7 @@ function cleanup_binding() {
 echo "Generating bindings for $PREFERENCES_HEADER_PATH"
 bindgen \
     --no-doc-comments \
+    --use-core \
     --whitelist-function "SCPreferences.*" \
     --blacklist-type "(__)?CF.*" \
     --blacklist-type "Boolean" \
@@ -97,6 +98,7 @@ sleep 2
 
 bindgen \
     --no-doc-comments \
+    --use-core \
     --whitelist-function "SCDynamicStore.*" \
     --whitelist-var "kSCDynamicStore.*" \
     --blacklist-type "(__)?CF.*" \
@@ -129,6 +131,7 @@ sleep 2
 
 bindgen \
     --no-doc-comments \
+    --use-core \
     --whitelist-function "SCNetwork.*" \
     --whitelist-function "SCBondInterface.*" \
     --whitelist-var "kSC(NetworkInterface|BondStatus).*" \
@@ -175,6 +178,7 @@ sleep 2
 
 bindgen \
     --no-doc-comments \
+    --use-core \
     --whitelist-var "kSC.*" \
     --blacklist-type "(__)?CF.*" \
     --raw-line "// Generated using:" \
