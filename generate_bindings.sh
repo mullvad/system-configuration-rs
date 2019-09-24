@@ -26,6 +26,38 @@ echo "Using macOS SDK at: $SDK_PATH"
 echo "Using $BINDGEN_VERSION"
 echo ""
 
+function cleanup_binding() {
+    local binding_path="$1"
+
+    sed -i 's/::core::option::Option/Option/g' "$binding_path"
+    sed -i 's/::std::os::raw::c_void/c_void/g' "$binding_path"
+    sed -i '/#\[derive(Debug, Copy, Clone)\]/d' "$binding_path"
+
+    # Change struct bodies to (c_void);
+    #   Search regex: {\n +_unused: \[u8; 0],\n}
+    #   Replace string: (c_void);\n
+    sed -i -e '/^pub struct .* {$/ {
+        N;N
+        s/ {\n *_unused: \[u8; 0\],\n}/(c_void);\n/
+    }' "$binding_path"
+
+    # Remove all }\nextern "C" { to condense code a bit
+    #   Search regex: }\nextern "C" {
+    #   Replace string:
+    sed -i -e '/^extern "C" {$/ {
+        :loop
+        n
+        /^}$/! b loop
+        /^}$/ {
+            N
+            t reset_condition_flags
+            :reset_condition_flags
+            s/}\nextern "C" {//
+            t loop
+        }
+    }' "$binding_path"
+}
+
 echo "Generating bindings for $PREFERENCES_HEADER_PATH"
 bindgen \
     --no-doc-comments \
@@ -38,6 +70,7 @@ bindgen \
     --raw-line "// $BINDGEN_VERSION" \
     --raw-line "// macOS SDK $SDK_VERSION." \
     --raw-line "" \
+    --raw-line "use core::ffi::c_void;" \
     --raw-line "use core_foundation_sys::array::CFArrayRef;" \
     --raw-line "use core_foundation_sys::base::{Boolean, CFIndex, CFAllocatorRef, CFTypeID};" \
     --raw-line "use core_foundation_sys::data::CFDataRef;" \
@@ -46,7 +79,6 @@ bindgen \
     --raw-line "use core_foundation_sys::runloop::CFRunLoopRef;" \
     --raw-line "" \
     --raw-line "use dispatch_queue_t;" \
-    --raw-line "use libc::c_void;" \
     --raw-line "" \
     --raw-line "pub type AuthorizationOpaqueRef = c_void;" \
     --raw-line "pub type __SCPreferences = c_void;" \
@@ -55,6 +87,7 @@ bindgen \
     -I$SDK_PATH/usr/include \
     -F$FRAMEWORK_PATH
 
+cleanup_binding $PREFERENCES_BINDING_PATH
 rustfmt $PREFERENCES_BINDING_PATH
 
 echo ""
@@ -86,6 +119,7 @@ bindgen \
     -I$SDK_PATH/usr/include \
     -F$FRAMEWORK_PATH
 
+cleanup_binding $DYNAMIC_STORE_BINDING_PATH
 rustfmt $DYNAMIC_STORE_BINDING_PATH
 
 echo ""
@@ -108,6 +142,7 @@ bindgen \
     --raw-line "// $BINDGEN_VERSION" \
     --raw-line "// macOS SDK $SDK_VERSION." \
     --raw-line "" \
+    --raw-line "use core::ffi::c_void;" \
     --raw-line "use core_foundation_sys::array::CFArrayRef;" \
     --raw-line "use core_foundation_sys::base::{Boolean, CFIndex, CFAllocatorRef, CFTypeID};" \
     --raw-line "use core_foundation_sys::string::CFStringRef;" \
@@ -115,7 +150,7 @@ bindgen \
     --raw-line "use core_foundation_sys::runloop::CFRunLoopRef;" \
     --raw-line "" \
     --raw-line "use dispatch_queue_t;" \
-    --raw-line "use libc::{c_void, c_char, c_int, sockaddr};" \
+    --raw-line "use libc::sockaddr;" \
     --raw-line "use preferences::SCPreferencesRef;" \
     --raw-line "" \
     --raw-line "pub type __SCNetworkReachability = c_void;" \
@@ -130,6 +165,7 @@ bindgen \
     -I$SDK_PATH/usr/include \
     -F$FRAMEWORK_PATH
 
+cleanup_binding $NETWORK_CONFIGURATION_BINDING_PATH
 rustfmt $NETWORK_CONFIGURATION_BINDING_PATH
 
 echo ""
@@ -152,4 +188,5 @@ bindgen \
     -I$SDK_PATH/usr/include \
     -F$FRAMEWORK_PATH
 
+cleanup_binding $SCHEMA_DEFINITIONS_BINDING_PATH
 rustfmt $SCHEMA_DEFINITIONS_BINDING_PATH
