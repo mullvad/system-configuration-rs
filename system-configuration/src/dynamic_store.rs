@@ -182,7 +182,7 @@ impl SCDynamicStore {
                 self.as_concrete_TypeRef(),
                 cf_pattern.as_concrete_TypeRef(),
             );
-            if array_ref != ptr::null() {
+            if !array_ref.is_null() {
                 Some(CFArray::wrap_under_create_rule(array_ref))
             } else {
                 None
@@ -198,7 +198,7 @@ impl SCDynamicStore {
         unsafe {
             let dict_ref =
                 SCDynamicStoreCopyValue(self.as_concrete_TypeRef(), cf_key.as_concrete_TypeRef());
-            if dict_ref != ptr::null() {
+            if !dict_ref.is_null() {
                 Some(CFPropertyList::wrap_under_create_rule(dict_ref))
             } else {
                 None
