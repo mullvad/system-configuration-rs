@@ -14,7 +14,7 @@
 
 use core_foundation::{
     array::{CFArray, CFArrayRef},
-    base::{CFType, kCFAllocatorDefault, TCFType},
+    base::{kCFAllocatorDefault, CFType, TCFType},
     boolean::CFBoolean,
     dictionary::CFDictionary,
     propertylist::{CFPropertyList, CFPropertyListSubClass},
