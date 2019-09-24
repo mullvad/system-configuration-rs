@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
-# Always have the latest version of bindgen and rustfmt installed before using this script
+# Always have the latest version of bindgen and rustfmt installed before using this script.
+# This script require GNU sed, and does not work with the default macOS sed: `brew install gnu-sed`.
 
 set -eu
 
@@ -62,6 +63,7 @@ echo "Generating bindings for $PREFERENCES_HEADER_PATH"
 bindgen \
     --no-doc-comments \
     --use-core \
+    --no-layout-tests \
     --whitelist-function "SCPreferences.*" \
     --blacklist-type "(__)?CF.*" \
     --blacklist-type "Boolean" \
@@ -99,6 +101,7 @@ sleep 2
 bindgen \
     --no-doc-comments \
     --use-core \
+    --no-layout-tests \
     --whitelist-function "SCDynamicStore.*" \
     --whitelist-var "kSCDynamicStore.*" \
     --blacklist-type "(__)?CF.*" \
@@ -132,6 +135,7 @@ sleep 2
 bindgen \
     --no-doc-comments \
     --use-core \
+    --no-layout-tests \
     --whitelist-function "SCNetwork.*" \
     --whitelist-function "SCBondInterface.*" \
     --whitelist-var "kSC(NetworkInterface|BondStatus).*" \
@@ -179,6 +183,7 @@ sleep 2
 bindgen \
     --no-doc-comments \
     --use-core \
+    --no-layout-tests \
     --whitelist-var "kSC.*" \
     --blacklist-type "(__)?CF.*" \
     --raw-line "// Generated using:" \
