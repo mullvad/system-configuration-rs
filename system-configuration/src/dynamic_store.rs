@@ -21,15 +21,12 @@ use core_foundation::{
     runloop::CFRunLoopSource,
     string::CFString,
 };
-use std::ptr;
-use sys::{
-    dynamic_store::{
-        kSCDynamicStoreUseSessionKeys, SCDynamicStoreCallBack, SCDynamicStoreContext,
-        SCDynamicStoreCopyKeyList, SCDynamicStoreCopyValue, SCDynamicStoreCreateRunLoopSource,
-        SCDynamicStoreCreateWithOptions, SCDynamicStoreGetTypeID, SCDynamicStoreRef,
-        SCDynamicStoreRemoveValue, SCDynamicStoreSetNotificationKeys, SCDynamicStoreSetValue,
-    },
-    libc::c_void,
+use std::{ffi::c_void, ptr};
+use sys::dynamic_store::{
+    kSCDynamicStoreUseSessionKeys, SCDynamicStoreCallBack, SCDynamicStoreContext,
+    SCDynamicStoreCopyKeyList, SCDynamicStoreCopyValue, SCDynamicStoreCreateRunLoopSource,
+    SCDynamicStoreCreateWithOptions, SCDynamicStoreGetTypeID, SCDynamicStoreRef,
+    SCDynamicStoreRemoveValue, SCDynamicStoreSetNotificationKeys, SCDynamicStoreSetValue,
 };
 
 /// Struct describing the callback happening when a watched value in the dynamic store is changed.
@@ -142,7 +139,7 @@ impl<T> SCDynamicStoreBuilder<T> {
     }
 }
 
-declare_TCFType!{
+declare_TCFType! {
     /// Access to the key-value pairs in the dynamic store of a running system.
     ///
     /// Use the [`SCDynamicStoreBuilder`] to create instances of this.
@@ -185,7 +182,7 @@ impl SCDynamicStore {
                 self.as_concrete_TypeRef(),
                 cf_pattern.as_concrete_TypeRef(),
             );
-            if array_ref != ptr::null() {
+            if !array_ref.is_null() {
                 Some(CFArray::wrap_under_create_rule(array_ref))
             } else {
                 None
@@ -201,7 +198,7 @@ impl SCDynamicStore {
         unsafe {
             let dict_ref =
                 SCDynamicStoreCopyValue(self.as_concrete_TypeRef(), cf_key.as_concrete_TypeRef());
-            if dict_ref != ptr::null() {
+            if !dict_ref.is_null() {
                 Some(CFPropertyList::wrap_under_create_rule(dict_ref))
             } else {
                 None
