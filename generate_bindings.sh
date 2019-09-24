@@ -63,6 +63,8 @@ function cleanup_binding() {
             t loop
         }
     }' "$binding_path"
+
+    rustfmt +nightly "$binding_path"
 }
 
 BINDGEN_COMMON_ARGUMENTS=(
@@ -101,7 +103,6 @@ bindgen \
     -F$FRAMEWORK_PATH
 
 cleanup_binding $PREFERENCES_BINDING_PATH
-rustfmt $PREFERENCES_BINDING_PATH
 
 echo ""
 echo ""
@@ -130,7 +131,6 @@ bindgen \
     -F$FRAMEWORK_PATH
 
 cleanup_binding $DYNAMIC_STORE_BINDING_PATH
-rustfmt $DYNAMIC_STORE_BINDING_PATH
 
 echo ""
 echo ""
@@ -172,7 +172,6 @@ bindgen \
     -F$FRAMEWORK_PATH
 
 cleanup_binding $NETWORK_CONFIGURATION_BINDING_PATH
-rustfmt $NETWORK_CONFIGURATION_BINDING_PATH
 
 echo ""
 echo ""
@@ -191,4 +190,3 @@ bindgen \
     -F$FRAMEWORK_PATH
 
 cleanup_binding $SCHEMA_DEFINITIONS_BINDING_PATH
-rustfmt $SCHEMA_DEFINITIONS_BINDING_PATH
