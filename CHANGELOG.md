@@ -22,6 +22,12 @@ Line wrap the file at 100 chars.                                              Th
 
 
 ## [Unreleased]
+### Added
+- Re-generate bindings using macOS 10.15 headers.
+
+### Changed
+- Use `core::ffi::c_void` instead of `libc::c_void` (new minimum supported Rust version: 1.30).
+- Define some ffi types as `struct TheType(c_void)` instead of `type TheType = c_void`.
 
 
 ## [0.2.0] - 2018-10-23
