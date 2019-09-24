@@ -12,20 +12,17 @@
 //!
 //! [`SCPreferences`]: https://developer.apple.com/documentation/systemconfiguration/scpreferences-ft8
 
-
 use core_foundation::base::{CFAllocator, TCFType};
 use core_foundation::string::CFString;
 use std::ptr;
 use sys::preferences::{SCPreferencesCreate, SCPreferencesGetTypeID, SCPreferencesRef};
 
-
-declare_TCFType!{
+declare_TCFType! {
     /// The handle to an open preferences session for accessing system configuration preferences.
     SCPreferences, SCPreferencesRef
 }
 
 impl_TCFType!(SCPreferences, SCPreferencesRef, SCPreferencesGetTypeID);
-
 
 impl SCPreferences {
     /// Initiates access to the default system preferences using the default allocator.
@@ -73,7 +70,6 @@ impl SCPreferences {
         }
     }
 }
-
 
 #[cfg(test)]
 mod tests {

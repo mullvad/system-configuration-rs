@@ -142,7 +142,7 @@ impl<T> SCDynamicStoreBuilder<T> {
     }
 }
 
-declare_TCFType!{
+declare_TCFType! {
     /// Access to the key-value pairs in the dynamic store of a running system.
     ///
     /// Use the [`SCDynamicStoreBuilder`] to create instances of this.
