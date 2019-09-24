@@ -21,15 +21,12 @@ use core_foundation::{
     runloop::CFRunLoopSource,
     string::CFString,
 };
-use std::ptr;
-use sys::{
-    dynamic_store::{
-        kSCDynamicStoreUseSessionKeys, SCDynamicStoreCallBack, SCDynamicStoreContext,
-        SCDynamicStoreCopyKeyList, SCDynamicStoreCopyValue, SCDynamicStoreCreateRunLoopSource,
-        SCDynamicStoreCreateWithOptions, SCDynamicStoreGetTypeID, SCDynamicStoreRef,
-        SCDynamicStoreRemoveValue, SCDynamicStoreSetNotificationKeys, SCDynamicStoreSetValue,
-    },
-    libc::c_void,
+use std::{ffi::c_void, ptr};
+use sys::dynamic_store::{
+    kSCDynamicStoreUseSessionKeys, SCDynamicStoreCallBack, SCDynamicStoreContext,
+    SCDynamicStoreCopyKeyList, SCDynamicStoreCopyValue, SCDynamicStoreCreateRunLoopSource,
+    SCDynamicStoreCreateWithOptions, SCDynamicStoreGetTypeID, SCDynamicStoreRef,
+    SCDynamicStoreRemoveValue, SCDynamicStoreSetNotificationKeys, SCDynamicStoreSetValue,
 };
 
 /// Struct describing the callback happening when a watched value in the dynamic store is changed.
