@@ -13,11 +13,13 @@ FRAMEWORK_PATH="$SDK_PATH/System/Library/Frameworks/"
 
 PREFERENCES_HEADER_PATH="$FRAMEWORK_PATH/SystemConfiguration.framework/Headers/SCPreferences.h"
 DYNAMIC_STORE_HEADER_PATH="$FRAMEWORK_PATH/SystemConfiguration.framework/Headers/SCDynamicStore.h"
+DYNAMIC_STORE_COPY_SPECIFIC_HEADER_PATH="$FRAMEWORK_PATH/SystemConfiguration.framework/Headers/SCDynamicStoreCopySpecific.h"
 NETWORK_CONFIGURATION_HEADER_PATH="$FRAMEWORK_PATH/SystemConfiguration.framework/Headers/SCNetworkConfiguration.h"
 SCHEMA_DEFINITIONS_HEADER_PATH="$FRAMEWORK_PATH/SystemConfiguration.framework/Headers/SCSchemaDefinitions.h"
 
 PREFERENCES_BINDING_PATH="./system-configuration-sys/src/preferences.rs"
 DYNAMIC_STORE_BINDING_PATH="./system-configuration-sys/src/dynamic_store.rs"
+DYNAMIC_STORE_COPY_SPECIFIC_BINDING_PATH="./system-configuration-sys/src/dynamic_store_copy_specific.rs"
 NETWORK_CONFIGURATION_BINDING_PATH="./system-configuration-sys/src/network_configuration.rs"
 SCHEMA_DEFINITIONS_BINDING_PATH="./system-configuration-sys/src/schema_definitions.rs"
 
@@ -131,6 +133,30 @@ bindgen \
     -F$FRAMEWORK_PATH
 
 cleanup_binding $DYNAMIC_STORE_BINDING_PATH
+
+echo ""
+echo ""
+echo "Generating bindings for $DYNAMIC_STORE_COPY_SPECIFIC_HEADER_PATH"
+sleep 2
+
+bindgen \
+    "${BINDGEN_COMMON_ARGUMENTS[@]}" \
+    --whitelist-function "SCDynamicStoreCopy(ComputerName|ConsoleUser|LocalHostName|Location|Proxies)" \
+    --blacklist-type "(__)?CF.*" \
+    --blacklist-type "Boolean" \
+    --blacklist-type "dispatch_queue_[ts]" \
+    --blacklist-type "(__)?SCDynamicStore.*" \
+    --raw-line "use core_foundation_sys::string::{CFStringEncoding, CFStringRef};" \
+    --raw-line "use core_foundation_sys::dictionary::CFDictionaryRef;" \
+    --raw-line "use dynamic_store::SCDynamicStoreRef;" \
+    --raw-line "" \
+    --raw-line "use libc::c_uint;" \
+    -o $DYNAMIC_STORE_COPY_SPECIFIC_BINDING_PATH \
+    $DYNAMIC_STORE_COPY_SPECIFIC_HEADER_PATH -- \
+    -I$SDK_PATH/usr/include \
+    -F$FRAMEWORK_PATH
+
+cleanup_binding $DYNAMIC_STORE_COPY_SPECIFIC_BINDING_PATH
 
 echo ""
 echo ""

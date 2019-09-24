@@ -14,7 +14,7 @@
 
 use core_foundation::{
     array::{CFArray, CFArrayRef},
-    base::{kCFAllocatorDefault, TCFType},
+    base::{CFType, kCFAllocatorDefault, TCFType},
     boolean::CFBoolean,
     dictionary::CFDictionary,
     propertylist::{CFPropertyList, CFPropertyListSubClass},
@@ -22,11 +22,14 @@ use core_foundation::{
     string::CFString,
 };
 use std::{ffi::c_void, ptr};
-use sys::dynamic_store::{
-    kSCDynamicStoreUseSessionKeys, SCDynamicStoreCallBack, SCDynamicStoreContext,
-    SCDynamicStoreCopyKeyList, SCDynamicStoreCopyValue, SCDynamicStoreCreateRunLoopSource,
-    SCDynamicStoreCreateWithOptions, SCDynamicStoreGetTypeID, SCDynamicStoreRef,
-    SCDynamicStoreRemoveValue, SCDynamicStoreSetNotificationKeys, SCDynamicStoreSetValue,
+use sys::{
+    dynamic_store::{
+        kSCDynamicStoreUseSessionKeys, SCDynamicStoreCallBack, SCDynamicStoreContext,
+        SCDynamicStoreCopyKeyList, SCDynamicStoreCopyValue, SCDynamicStoreCreateRunLoopSource,
+        SCDynamicStoreCreateWithOptions, SCDynamicStoreGetTypeID, SCDynamicStoreRef,
+        SCDynamicStoreRemoveValue, SCDynamicStoreSetNotificationKeys, SCDynamicStoreSetValue,
+    },
+    dynamic_store_copy_specific::SCDynamicStoreCopyProxies,
 };
 
 /// Struct describing the callback happening when a watched value in the dynamic store is changed.
@@ -184,6 +187,19 @@ impl SCDynamicStore {
             );
             if !array_ref.is_null() {
                 Some(CFArray::wrap_under_create_rule(array_ref))
+            } else {
+                None
+            }
+        }
+    }
+
+    /// Returns the key-value pairs that represent the current internet proxy settings. Or `None` if
+    /// no proxy settings have been defined or if an error occured.
+    pub fn get_proxies(&self) -> Option<CFDictionary<CFString, CFType>> {
+        unsafe {
+            let dictionary_ref = SCDynamicStoreCopyProxies(self.as_concrete_TypeRef());
+            if dictionary_ref != ptr::null() {
+                Some(CFDictionary::wrap_under_create_rule(dictionary_ref))
             } else {
                 None
             }
