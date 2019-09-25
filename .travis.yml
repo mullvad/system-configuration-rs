@@ -18,6 +18,9 @@ script:
     else
       echo "Not checking formatting on this build";
     fi
+  - if rustup component add clippy; then
+      cargo clippy --all-targets -- --deny warnings;
+    fi
 
 
 notifications:
