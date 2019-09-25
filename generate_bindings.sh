@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 
 # Always have the latest version of bindgen and rustfmt installed before using this script.
-# This script require GNU sed, and does not work with the default macOS sed: `brew install gnu-sed`.
+# This script require GNU sed, and expects it to be available as `gsed`. Adjust SED var if needed.
 
 set -eu
+
+SED=$(which gsed)
 
 export DYLD_LIBRARY_PATH=$(rustc +stable --print sysroot)/lib
 
@@ -33,19 +35,19 @@ function cleanup_binding() {
     local binding_path="$1"
 
     # `Option` is in the Rust standard prelude. No need to use full path, it's just verbose.
-    sed -i 's/::core::option::Option/Option/g' "$binding_path"
+    $SED -i 's/::core::option::Option/Option/g' "$binding_path"
 
     # The bindings that need these types will import them directly into scope with `--raw line`
-    sed -i 's/::std::os::raw:://g' "$binding_path"
+    $SED -i 's/::std::os::raw:://g' "$binding_path"
 
     # Most low level types should not be `Copy` nor `Clone`. And `Debug` usually don't make much
     # sense, since they are usually just pointers/binary data.
-    sed -i '/#\[derive(Debug, Copy, Clone)\]/d' "$binding_path"
+    $SED -i '/#\[derive(Debug, Copy, Clone)\]/d' "$binding_path"
 
     # Change struct bodies to (c_void);
     #   Search regex: {\n +_unused: \[u8; 0],\n}
     #   Replace string: (c_void);\n
-    sed -i -e '/^pub struct .* {$/ {
+    $SED -i -e '/^pub struct .* {$/ {
         N;N
         s/ {\n *_unused: \[u8; 0\],\n}/(c_void);\n/
     }' "$binding_path"
@@ -53,7 +55,7 @@ function cleanup_binding() {
     # Remove all }\nextern "C" { to condense code a bit
     #   Search regex: }\nextern "C" {
     #   Replace string:
-    sed -i -e '/^extern "C" {$/ {
+    $SED -i -e '/^extern "C" {$/ {
         :loop
         n
         /^}$/! b loop
