@@ -198,7 +198,7 @@ impl SCDynamicStore {
     pub fn get_proxies(&self) -> Option<CFDictionary<CFString, CFType>> {
         unsafe {
             let dictionary_ref = SCDynamicStoreCopyProxies(self.as_concrete_TypeRef());
-            if dictionary_ref != ptr::null() {
+            if !dictionary_ref.is_null() {
                 Some(CFDictionary::wrap_under_create_rule(dictionary_ref))
             } else {
                 None
