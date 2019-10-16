@@ -49,6 +49,8 @@ struct Context {
     call_count: u64,
 }
 
+
+#[allow(clippy::needless_pass_by_value)]
 fn my_callback(store: SCDynamicStore, changed_keys: CFArray<CFString>, context: &mut Context) {
     context.call_count += 1;
     println!("Callback call count: {}", context.call_count);
