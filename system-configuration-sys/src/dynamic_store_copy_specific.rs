@@ -4,9 +4,9 @@
 // bindgen 0.51.1
 // macOS SDK 10.15.
 
+use crate::dynamic_store::SCDynamicStoreRef;
 use core_foundation_sys::dictionary::CFDictionaryRef;
 use core_foundation_sys::string::{CFStringEncoding, CFStringRef};
-use dynamic_store::SCDynamicStoreRef;
 
 use libc::c_uint;
 

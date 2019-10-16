@@ -12,6 +12,15 @@
 //!
 //! [`SCDynamicStore`]: https://developer.apple.com/documentation/systemconfiguration/scdynamicstore?language=objc
 
+use crate::sys::{
+    dynamic_store::{
+        kSCDynamicStoreUseSessionKeys, SCDynamicStoreCallBack, SCDynamicStoreContext,
+        SCDynamicStoreCopyKeyList, SCDynamicStoreCopyValue, SCDynamicStoreCreateRunLoopSource,
+        SCDynamicStoreCreateWithOptions, SCDynamicStoreGetTypeID, SCDynamicStoreRef,
+        SCDynamicStoreRemoveValue, SCDynamicStoreSetNotificationKeys, SCDynamicStoreSetValue,
+    },
+    dynamic_store_copy_specific::SCDynamicStoreCopyProxies,
+};
 use core_foundation::{
     array::{CFArray, CFArrayRef},
     base::{kCFAllocatorDefault, CFType, TCFType},
@@ -22,15 +31,6 @@ use core_foundation::{
     string::CFString,
 };
 use std::{ffi::c_void, ptr};
-use sys::{
-    dynamic_store::{
-        kSCDynamicStoreUseSessionKeys, SCDynamicStoreCallBack, SCDynamicStoreContext,
-        SCDynamicStoreCopyKeyList, SCDynamicStoreCopyValue, SCDynamicStoreCreateRunLoopSource,
-        SCDynamicStoreCreateWithOptions, SCDynamicStoreGetTypeID, SCDynamicStoreRef,
-        SCDynamicStoreRemoveValue, SCDynamicStoreSetNotificationKeys, SCDynamicStoreSetValue,
-    },
-    dynamic_store_copy_specific::SCDynamicStoreCopyProxies,
-};
 
 /// Struct describing the callback happening when a watched value in the dynamic store is changed.
 pub struct SCDynamicStoreCallBackContext<T> {

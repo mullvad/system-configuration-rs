@@ -1,7 +1,3 @@
-extern crate system_configuration;
-
-extern crate core_foundation;
-
 use core_foundation::{
     array::CFArray,
     base::{TCFType, ToVoid},

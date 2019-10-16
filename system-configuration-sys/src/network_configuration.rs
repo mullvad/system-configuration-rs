@@ -11,9 +11,9 @@ use core_foundation_sys::dictionary::CFDictionaryRef;
 use core_foundation_sys::runloop::CFRunLoopRef;
 use core_foundation_sys::string::CFStringRef;
 
-use dispatch_queue_t;
+use crate::dispatch_queue_t;
+use crate::preferences::SCPreferencesRef;
 use libc::{c_char, c_int, sockaddr, socklen_t};
-use preferences::SCPreferencesRef;
 
 pub type __SCNetworkReachability = c_void;
 pub type __SCNetworkConnection = c_void;
