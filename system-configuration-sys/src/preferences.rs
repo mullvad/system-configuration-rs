@@ -12,7 +12,7 @@ use core_foundation_sys::propertylist::CFPropertyListRef;
 use core_foundation_sys::runloop::CFRunLoopRef;
 use core_foundation_sys::string::CFStringRef;
 
-use dispatch_queue_t;
+use crate::dispatch_queue_t;
 
 pub type AuthorizationOpaqueRef = c_void;
 pub type __SCPreferences = c_void;

@@ -17,8 +17,8 @@
 #![allow(non_upper_case_globals)]
 #![allow(non_snake_case)]
 
-pub extern crate core_foundation_sys;
-pub extern crate libc;
+pub use core_foundation_sys;
+pub use libc;
 
 /// This is a temporary solution.
 pub type dispatch_queue_t = *mut libc::c_void;

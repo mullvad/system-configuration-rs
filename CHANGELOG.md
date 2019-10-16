@@ -28,6 +28,7 @@ Line wrap the file at 100 chars.                                              Th
 ### Changed
 - Use `core::ffi::c_void` instead of `libc::c_void` (new minimum supported Rust version: 1.30).
 - Define some ffi types as `struct TheType(c_void)` instead of `type TheType = c_void`.
+- Upgrade crates to Rust 2018 edition, increasing minimum supported Rust version to 1.31
 
 
 ## [0.2.0] - 2018-10-23

@@ -6,7 +6,7 @@
 
 use core_foundation_sys::dictionary::CFDictionaryRef;
 use core_foundation_sys::string::{CFStringEncoding, CFStringRef};
-use dynamic_store::SCDynamicStoreRef;
+use crate::dynamic_store::SCDynamicStoreRef;
 
 use libc::c_uint;
 

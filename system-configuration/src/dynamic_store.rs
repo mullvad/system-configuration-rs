@@ -22,7 +22,7 @@ use core_foundation::{
     string::CFString,
 };
 use std::{ffi::c_void, ptr};
-use sys::{
+use crate::sys::{
     dynamic_store::{
         kSCDynamicStoreUseSessionKeys, SCDynamicStoreCallBack, SCDynamicStoreContext,
         SCDynamicStoreCopyKeyList, SCDynamicStoreCopyValue, SCDynamicStoreCreateRunLoopSource,

@@ -12,7 +12,7 @@ use core_foundation_sys::propertylist::CFPropertyListRef;
 use core_foundation_sys::runloop::CFRunLoopSourceRef;
 use core_foundation_sys::string::CFStringRef;
 
-use dispatch_queue_t;
+use crate::dispatch_queue_t;
 
 #[repr(C)]
 pub struct __SCDynamicStore(c_void);

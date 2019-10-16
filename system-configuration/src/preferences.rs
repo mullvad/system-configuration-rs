@@ -15,7 +15,7 @@
 use core_foundation::base::{CFAllocator, TCFType};
 use core_foundation::string::CFString;
 use std::ptr;
-use sys::preferences::{SCPreferencesCreate, SCPreferencesGetTypeID, SCPreferencesRef};
+use crate::sys::preferences::{SCPreferencesCreate, SCPreferencesGetTypeID, SCPreferencesRef};
 
 declare_TCFType! {
     /// The handle to an open preferences session for accessing system configuration preferences.
