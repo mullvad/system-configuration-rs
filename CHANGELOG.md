@@ -22,6 +22,9 @@ Line wrap the file at 100 chars.                                              Th
 
 
 ## [Unreleased]
+
+
+## [0.3.0] - 2019-10-16
 ### Added
 - Re-generate bindings using macOS 10.15 headers.
 
