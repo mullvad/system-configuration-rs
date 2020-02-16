@@ -11,5 +11,5 @@ readme = "../README.md"
 edition = "2018"
 
 [dependencies]
-core-foundation = "0.6"
+core-foundation = "0.7"
 system-configuration-sys = { path = "../system-configuration-sys", version = "0.2" }
