@@ -24,4 +24,5 @@ pub extern crate core_foundation;
 pub extern crate system_configuration_sys as sys;
 
 pub mod dynamic_store;
+pub mod network_reachability;
 pub mod preferences;
