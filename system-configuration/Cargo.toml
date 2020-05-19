@@ -13,3 +13,4 @@ edition = "2018"
 [dependencies]
 core-foundation = "0.6"
 system-configuration-sys = { path = "../system-configuration-sys", version = "0.3" }
+bitflags = "1"

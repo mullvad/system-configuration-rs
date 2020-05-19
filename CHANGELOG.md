@@ -22,7 +22,16 @@ Line wrap the file at 100 chars.                                              Th
 
 
 ## [Unreleased]
+### Added
+- Add bindings for `SCNetworkReachability` and related types.
 
+### Changed
+- Bump minimum supported Rust version to 1.36
+- Update `core-foundation` dependency to 0.7
+
+### Fixed
+- Move `SCNetworkReachability` and related types from `network_configuration` into their own module
+  in the `system-configuration-sys` crate.
 
 ## [0.3.0] - 2019-10-16
 ### Added
