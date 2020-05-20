@@ -81,23 +81,23 @@ core_foundation::declare_TCFType!(
     #[doc = "See [`SCNetworkReachability`]  for details."]
     #[doc = ""]
     #[doc = "[`SCNetworkReachability`]: https://developer.apple.com/documentation/systemconfiguration/scnetworkreachability-g7d"]
-    NetworkReachability,
+    SCNetworkReachability,
     SCNetworkReachabilityRef
 );
 
 core_foundation::impl_TCFType!(
-    NetworkReachability,
+    SCNetworkReachability,
     SCNetworkReachabilityRef,
     SCNetworkReachabilityGetTypeID
 );
 
-impl NetworkReachability {
-    /// Construct a NetworkReachability struct with a local and a remote socket address.
+impl SCNetworkReachability {
+    /// Construct a SCNetworkReachability struct with a local and a remote socket address.
     ///
     /// See [``SCNetworkReachabilityCreateWithAddressPair``] for details.
     ///
     /// [``SCNetworkReachabilityCreateWithAddressPair``]: https://developer.apple.com/documentation/systemconfiguration/1514908-scnetworkreachabilitycreatewitha?language=objc
-    pub fn from_addr_pair(local: SocketAddr, remote: SocketAddr) -> NetworkReachability {
+    pub fn from_addr_pair(local: SocketAddr, remote: SocketAddr) -> SCNetworkReachability {
         let local_ptr = to_c_sockaddr(local);
         let remote_ptr = to_c_sockaddr(remote);
 
@@ -190,7 +190,7 @@ impl NetworkReachability {
     }
 
     /// Sets callback that is run whenever network connectivity changes. For the callback to be
-    /// invoked, the `NetworkReachability` has to be registered on a run loop. Calling this
+    /// invoked, the `SCNetworkReachability` has to be registered on a run loop. Calling this
     /// function multiple times will clear the subsequently set callback. Returns false if setting
     /// a callback failed.
     ///
@@ -229,26 +229,26 @@ impl NetworkReachability {
     }
 }
 
-impl From<SocketAddr> for NetworkReachability {
+impl From<SocketAddr> for SCNetworkReachability {
     fn from(addr: SocketAddr) -> Self {
         let sockaddr_ptr = to_c_sockaddr(addr);
 
         let ptr = unsafe { SCNetworkReachabilityCreateWithAddress(std::ptr::null(), sockaddr_ptr) };
         unsafe {
             let _ = Box::from_raw(sockaddr_ptr);
-            NetworkReachability::wrap_under_create_rule(ptr)
+            SCNetworkReachability::wrap_under_create_rule(ptr)
         }
     }
 }
 
 #[derive(Clone)]
 struct NetworkReachabilityCallbackContext<T: FnMut(ReachabilityFlags) + Clone> {
-    _host: NetworkReachability,
+    _host: SCNetworkReachability,
     callback: T,
 }
 
 impl<T: FnMut(ReachabilityFlags) + Clone> NetworkReachabilityCallbackContext<T> {
-    fn new(host: NetworkReachability, callback: T) -> Self {
+    fn new(host: SCNetworkReachability, callback: T) -> Self {
         Self {
             _host: host,
             callback,
@@ -335,10 +335,10 @@ mod test {
         ];
 
         for addr in sockaddrs {
-            let mut reachability = NetworkReachability::from(addr);
+            let mut reachability = SCNetworkReachability::from(addr);
             if reachability.0.is_null() {
                 panic!(
-                    "Failed to construct a NetworkReachability struct with {}",
+                    "Failed to construct a SCNetworkReachability struct with {}",
                     addr
                 );
             }
@@ -366,10 +366,10 @@ mod test {
         .map(|(a, b)| (a.parse().unwrap(), b.parse().unwrap()));
 
         for (local, remote) in pairs {
-            let mut reachability = NetworkReachability::from_addr_pair(local, remote);
+            let mut reachability = SCNetworkReachability::from_addr_pair(local, remote);
             if reachability.0.is_null() {
                 panic!(
-                    "Failed to construct a NetworkReachability struct with address pair {} - {}",
+                    "Failed to construct a SCNetworkReachability struct with address pair {} - {}",
                     local, remote
                 );
             }
@@ -392,7 +392,7 @@ mod test {
         let get_cstring = |input: &str| CString::new(input).unwrap();
 
         for input in valid_inputs.into_iter().map(get_cstring) {
-            match NetworkReachability::from_host(&input) {
+            match SCNetworkReachability::from_host(&input) {
                 Ok(mut reachability) => {
                     reachability.set_callback(|_| {}).unwrap();
                     reachability
@@ -406,29 +406,30 @@ mod test {
                         })
                         .unwrap();
                 }
-                Err(_err) => {
+                Err(err) => {
                     panic!(
-                        "Failed to construct a NetworkReachability from {}",
-                        input.to_string_lossy()
+                        "Failed to construct a SCNetworkReachability from {} - {:?}",
+                        input.to_string_lossy(),
+                        err
                     );
                 }
             }
         }
 
         // Can only testify that an empty string is invalid, everything else seems to work
-        if NetworkReachability::from_host(&get_cstring("")).is_ok() {
-            panic!("Constructed valid NetworkReachability from empty string");
+        if SCNetworkReachability::from_host(&get_cstring("")).is_ok() {
+            panic!("Constructed valid SCNetworkReachability from empty string");
         }
     }
 
-    unsafe impl Send for NetworkReachability {}
+    unsafe impl Send for SCNetworkReachability {}
 
     #[test]
     fn assert_infallibility_of_setting_a_callback() {
         let (tx, rx) = std::sync::mpsc::channel();
         std::thread::spawn(move || {
             let mut reachability =
-                NetworkReachability::from("0.0.0.0:0".parse::<SocketAddr>().unwrap());
+                SCNetworkReachability::from("0.0.0.0:0".parse::<SocketAddr>().unwrap());
             reachability.set_callback(|_| {}).unwrap();
             reachability
                 .schedule_with_runloop(&CFRunLoop::get_current(), unsafe { kCFRunLoopCommonModes })
