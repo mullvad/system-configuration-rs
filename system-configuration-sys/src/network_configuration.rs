@@ -126,6 +126,8 @@ extern "C" {
 
     pub static kSCNetworkInterfaceTypeBond: CFStringRef;
 
+    pub static kSCNetworkInterfaceTypeBridge: CFStringRef;
+
     pub static kSCNetworkInterfaceTypeEthernet: CFStringRef;
 
     pub static kSCNetworkInterfaceTypeFireWire: CFStringRef;

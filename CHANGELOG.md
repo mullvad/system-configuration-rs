@@ -23,6 +23,7 @@ Line wrap the file at 100 chars.                                              Th
 
 ## [Unreleased]
 ### Added
+- Add bindings for `SCNetworkInterface`.
 - Add bindings for `SCNetworkReachability` and related types.
 
 ### Changed
