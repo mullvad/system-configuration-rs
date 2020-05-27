@@ -238,6 +238,7 @@ bindgen \
     "${BINDGEN_COMMON_ARGUMENTS[@]}" \
     --whitelist-var "kSC.*" \
     --blacklist-type "(__)?CF.*" \
+    --blacklist-type "dispatch_queue_[ts]" \
     --raw-line "use core_foundation_sys::string::CFStringRef;" \
     --raw-line "" \
     -o $SCHEMA_DEFINITIONS_BINDING_PATH \
