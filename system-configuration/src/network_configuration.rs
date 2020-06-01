@@ -143,11 +143,11 @@ impl SCNetworkInterfaceType {
             if id_is_equal_to(kSCNetworkInterfaceType6to4) {
                 Some(SCNetworkInterfaceType::SixToFour)
             } else if id_is_equal_to(kSCNetworkInterfaceTypeBluetooth) {
-                Some(SCNetworkInterfaceType::Bond)
-            } else if id_is_equal_to(kSCNetworkInterfaceTypeBridge) {
                 Some(SCNetworkInterfaceType::Bluetooth)
-            } else if id_is_equal_to(kSCNetworkInterfaceTypeBond) {
+            } else if id_is_equal_to(kSCNetworkInterfaceTypeBridge) {
                 Some(SCNetworkInterfaceType::Bridge)
+            } else if id_is_equal_to(kSCNetworkInterfaceTypeBond) {
+                Some(SCNetworkInterfaceType::Bond)
             } else if id_is_equal_to(kSCNetworkInterfaceTypeEthernet) {
                 Some(SCNetworkInterfaceType::Ethernet)
             } else if id_is_equal_to(kSCNetworkInterfaceTypeFireWire) {
