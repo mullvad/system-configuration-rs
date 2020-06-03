@@ -10,5 +10,5 @@ license = "MIT/Apache-2.0"
 edition = "2018"
 
 [dependencies]
-core-foundation-sys = "0.6"
+core-foundation-sys = "0.7"
 libc = "0.2"
