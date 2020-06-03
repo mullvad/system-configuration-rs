@@ -1,26 +1,28 @@
 language: rust
 cache: cargo
 rust:
-  - 1.31.0
-  - nightly
   - stable
   - beta
+  - nightly
+  - 1.31.0
 os:
   - osx
 
 script:
-  - cargo build --all --verbose
-  - cargo test --all --verbose
-  - if [ "${TRAVIS_RUST_VERSION}" = "nightly" ]; then
-      rustup component add rustfmt-preview;
+  - if [ "${TRAVIS_RUST_VERSION}" = "stable" ]; then
+      rustup component add rustfmt;
       rustfmt --version;
-      cargo fmt -- --check --unstable-features;
+      cargo fmt -- --check;
     else
       echo "Not checking formatting on this build";
     fi
   - if rustup component add clippy; then
       cargo clippy --all-targets -- --deny warnings;
+    else
+      echo "Failed to install clippy. Not checking with it";
     fi
+  - cargo build --all --verbose
+  - cargo test --all --verbose
 
 
 notifications:
