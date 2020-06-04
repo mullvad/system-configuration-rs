@@ -1,6 +1,6 @@
 [package]
 name = "system-configuration-sys"
-version = "0.4.0"
+version = "0.4.1"
 authors = ["Mullvad VPN <admin@mullvad.net>", "Linus Färnstrand <linus@mullvad.net>", "Andrej Mihajlov <and@mullvad.net>"]
 description = "Low level bindings to SystemConfiguration framework for macOS"
 keywords = ["macos", "system", "configuration", "bindings"]
@@ -11,4 +11,4 @@ edition = "2018"
 
 [dependencies]
 core-foundation-sys = "0.7"
-libc = "0.2"
+libc = "0.2.49"

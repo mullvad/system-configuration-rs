@@ -24,6 +24,11 @@ Line wrap the file at 100 chars.                                              Th
 ## [Unreleased]
 
 
+## [0.4.1] - 2020-06-04
+### Fixed
+- Bump the required libc version from 0.2.0 to 0.2.49 to fix the build
+
+
 ## [0.4.0] - 2020-06-04
 ### Added
 - Add bindings for `SCNetworkInterface`.
