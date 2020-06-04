@@ -22,6 +22,9 @@ Line wrap the file at 100 chars.                                              Th
 
 
 ## [Unreleased]
+
+
+## [0.4.0] - 2020-06-04
 ### Added
 - Add bindings for `SCNetworkInterface`.
 - Add bindings for `SCNetworkReachability` and related types.
@@ -34,9 +37,6 @@ Line wrap the file at 100 chars.                                              Th
 - Move `SCNetworkReachability` and related types from `network_configuration` into their own module
   in the `system-configuration-sys` crate.
 
-## Changed
-- Bump minimum supported Rust version to 1.36
-- Update `core-foundation` dependency to 0.7
 
 ## [0.3.0] - 2019-10-16
 ### Added
