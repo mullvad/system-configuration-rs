@@ -178,7 +178,7 @@ impl SCNetworkReachability {
         }
 
         ReachabilityFlags::from_bits(raw_flags)
-            .ok_or_else(|| ReachabilityError::UnrecognizedFlags(raw_flags))
+            .ok_or(ReachabilityError::UnrecognizedFlags(raw_flags))
     }
 
     /// Schedule callback with runloop.
