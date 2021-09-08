@@ -11,6 +11,6 @@ readme = "../README.md"
 edition = "2018"
 
 [dependencies]
-core-foundation = "0.7"
+core-foundation = "0.9"
 system-configuration-sys = { path = "../system-configuration-sys", version = "0.4" }
 bitflags = "1"
