@@ -23,6 +23,10 @@ Line wrap the file at 100 chars.                                              Th
 
 ## [Unreleased]
 
+## [0.5.0] - 2021-12-30
+### Changed
+- Bump minimum supported Rust version to 1.46.0
+- Bump `core-foundation` dependency to 0.9
 
 ## [0.4.1] - 2020-06-04
 ### Fixed
