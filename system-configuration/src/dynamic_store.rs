@@ -82,6 +82,7 @@ impl<T> SCDynamicStoreBuilder<T> {
     ///
     /// [`SCDynamicStore`]: struct.SCDynamicStore.html
     /// [`SCDynamicStoreCreateWithOptions`]: https://developer.apple.com/documentation/systemconfiguration/1437818-scdynamicstorecreatewithoptions?language=objc
+    #[must_use]
     pub fn session_keys(mut self, session_keys: bool) -> Self {
         self.session_keys = session_keys;
         self
