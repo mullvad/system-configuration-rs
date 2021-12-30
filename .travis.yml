@@ -3,7 +3,7 @@ cache: cargo
 rust:
   - stable
   - beta
-  - nightly
+#  - nightly
   - 1.46.0
 os:
   - osx
