@@ -367,12 +367,11 @@ mod test {
 
         for addr in sockaddrs {
             let mut reachability = SCNetworkReachability::from(addr);
-            if reachability.0.is_null() {
-                panic!(
-                    "Failed to construct a SCNetworkReachability struct with {}",
-                    addr
-                );
-            }
+            assert!(
+                !reachability.0.is_null(),
+                "Failed to construct a SCNetworkReachability struct with {}",
+                addr
+            );
             reachability.set_callback(|_| {}).unwrap();
             reachability
                 .schedule_with_runloop(&CFRunLoop::get_current(), unsafe { kCFRunLoopCommonModes })
@@ -398,12 +397,12 @@ mod test {
 
         for (local, remote) in pairs {
             let mut reachability = SCNetworkReachability::from_addr_pair(local, remote);
-            if reachability.0.is_null() {
-                panic!(
-                    "Failed to construct a SCNetworkReachability struct with address pair {} - {}",
-                    local, remote
-                );
-            }
+            assert!(
+                !reachability.0.is_null(),
+                "Failed to construct a SCNetworkReachability struct with address pair {} - {}",
+                local,
+                remote
+            );
             reachability.set_callback(|_| {}).unwrap();
             reachability
                 .schedule_with_runloop(&CFRunLoop::get_current(), unsafe { kCFRunLoopCommonModes })
@@ -447,9 +446,10 @@ mod test {
         }
 
         // Can only testify that an empty string is invalid, everything else seems to work
-        if SCNetworkReachability::from_host(&get_cstring("")).is_some() {
-            panic!("Constructed valid SCNetworkReachability from empty string");
-        }
+        assert!(
+            !SCNetworkReachability::from_host(&get_cstring("")).is_some(),
+            "Constructed valid SCNetworkReachability from empty string"
+        );
     }
 
     unsafe impl Send for SCNetworkReachability {}
