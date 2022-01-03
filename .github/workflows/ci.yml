@@ -63,7 +63,7 @@ jobs:
       matrix:
         # MSRV. Not considered breaking when this has to be bumped.
         # But should be mentioned in the changelog.
-        rust: [stable, beta, nightly, 1.46.0]
+        rust: [stable, beta, nightly, 1.56.0]
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v2

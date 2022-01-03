@@ -23,7 +23,7 @@ Line wrap the file at 100 chars.                                              Th
 
 ## [Unreleased]
 ### Changed
-- Bump minimum supported Rust version to 1.46
+- Bump minimum supported Rust version to 1.56.0
 
 
 ## [0.4.1] - 2020-06-04
