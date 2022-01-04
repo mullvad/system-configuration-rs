@@ -25,8 +25,13 @@ Line wrap the file at 100 chars.                                              Th
 ### Added
 - Add bindings for `SCNetworkSet` and `SCNetworkService`
 
+
+## [0.5.0] - 2022-01-03
 ### Changed
-- Bump minimum supported Rust version to 1.56.0
+- Upgrade crates to Rust 2021 edition.
+- Bump minimum supported Rust version (MSRV) to 1.56.0.
+- Upgrade core-foundation to 0.9 and core-foundation-sys to 0.8. This is a breaking
+  change since those crates are publicly re-exported from these crates.
 
 
 ## [0.4.1] - 2020-06-04
