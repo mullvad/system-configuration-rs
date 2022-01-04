@@ -7,7 +7,7 @@ keywords = ["macos", "system", "configuration", "bindings"]
 categories = ["external-ffi-bindings", "os::macos-apis"]
 repository = "https://github.com/mullvad/system-configuration-rs"
 license = "MIT OR Apache-2.0"
-edition = "2018"
+edition = "2021"
 
 [dependencies]
 core-foundation-sys = "0.8"
