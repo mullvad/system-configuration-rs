@@ -245,22 +245,27 @@ impl SCNetworkReachability {
             callback,
         ));
 
+        let callback_ptr = Arc::into_raw(callback) as *mut NetworkReachabilityCallbackContext<F>;
+
         let mut callback_context = SCNetworkReachabilityContext {
             version: 0,
-            info: Arc::into_raw(callback) as *mut _,
+            info: callback_ptr as *mut _,
             retain: Some(NetworkReachabilityCallbackContext::<F>::retain_context),
             release: Some(NetworkReachabilityCallbackContext::<F>::release_context),
             copyDescription: Some(NetworkReachabilityCallbackContext::<F>::copy_ctx_description),
         };
 
-        if unsafe {
+        let success = unsafe {
             SCNetworkReachabilitySetCallback(
                 self.0,
                 Some(NetworkReachabilityCallbackContext::<F>::callback),
                 &mut callback_context,
             )
-        } == 0u8
-        {
+        };
+
+        let _ = unsafe { Arc::from_raw(callback_ptr) };
+
+        if success == 0u8 {
             Err(SetCallbackError {})
         } else {
             Ok(())
