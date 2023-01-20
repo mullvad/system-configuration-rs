@@ -312,17 +312,13 @@ impl<T: Fn(ReachabilityFlags) + Sync + Send> NetworkReachabilityCallbackContext<
         description_ref
     }
 
-    extern "C" fn release_context(ctx: *const c_void) {
-        unsafe {
-            Arc::decrement_strong_count(ctx as *mut Self);
-        }
+    unsafe extern "C" fn release_context(ctx: *const c_void) {
+        Arc::decrement_strong_count(ctx as *mut Self);
     }
 
-    extern "C" fn retain_context(ctx_ptr: *const c_void) -> *const c_void {
-        unsafe {
-            Arc::increment_strong_count(ctx_ptr as *const Self);
-            ctx_ptr
-        }
+    unsafe extern "C" fn retain_context(ctx_ptr: *const c_void) -> *const c_void {
+        Arc::increment_strong_count(ctx_ptr as *const Self);
+        ctx_ptr
     }
 }
 
