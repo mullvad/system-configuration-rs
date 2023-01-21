@@ -247,13 +247,22 @@ impl SCNetworkReachability {
 
         let mut callback_context = SCNetworkReachabilityContext {
             version: 0,
-            info: Arc::into_raw(callback) as *mut _,
+            info: Arc::as_ptr(&callback) as *mut _,
             retain: Some(NetworkReachabilityCallbackContext::<F>::retain_context),
             release: Some(NetworkReachabilityCallbackContext::<F>::release_context),
             copyDescription: Some(NetworkReachabilityCallbackContext::<F>::copy_ctx_description),
         };
 
         if unsafe {
+            // The call to SCNetworkReachabilitySetCallback will call the
+            // `retain` callback which will increment the reference count on
+            // `callback`. Therefore, although `callback` is dropped when this
+            // function goes out of scope, the reference count will still be >0.
+            //
+            // When `SCNetworkReachability` is dropped, `release` is called
+            // which will drop the reference count on `callback` to 0.
+            //
+            // Assumes the pointer pointed to by the `info` member of `callback_context` is still valid.
             SCNetworkReachabilitySetCallback(
                 self.0,
                 Some(NetworkReachabilityCallbackContext::<F>::callback),
@@ -309,17 +318,15 @@ impl<T: Fn(ReachabilityFlags) + Sync + Send> NetworkReachabilityCallbackContext<
 
     extern "C" fn release_context(ctx: *const c_void) {
         unsafe {
-            let _ = Arc::from_raw(ctx as *mut Self);
+            Arc::decrement_strong_count(ctx as *mut Self);
         }
     }
 
     extern "C" fn retain_context(ctx_ptr: *const c_void) -> *const c_void {
         unsafe {
-            let ctx_ref: Arc<Self> = Arc::from_raw(ctx_ptr as *const Self);
-            let new_ctx = ctx_ref.clone();
-            std::mem::forget(ctx_ref);
-            Arc::into_raw(new_ctx) as *const c_void
+            Arc::increment_strong_count(ctx_ptr as *mut Self);
         }
+        ctx_ptr
     }
 }
 
