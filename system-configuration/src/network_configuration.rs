@@ -1,11 +1,20 @@
 //! Bindings for [`SCNetworkConfiguration`].
 //!
 //! [`SCNetworkConfiguration`]: https://developer.apple.com/documentation/systemconfiguration/scnetworkconfiguration?language=objc
-use core_foundation::{array::CFArray, base::TCFType, string::CFString};
+use core_foundation::{
+    array::CFArray,
+    base::{TCFType, ToVoid},
+    string::CFString,
+};
 use system_configuration_sys::network_configuration::{
     SCNetworkInterfaceCopyAll, SCNetworkInterfaceGetBSDName, SCNetworkInterfaceGetInterfaceType,
     SCNetworkInterfaceGetLocalizedDisplayName, SCNetworkInterfaceGetTypeID, SCNetworkInterfaceRef,
+    SCNetworkServiceCopyAll, SCNetworkServiceGetEnabled, SCNetworkServiceGetInterface,
+    SCNetworkServiceGetServiceID, SCNetworkServiceGetTypeID, SCNetworkServiceRef,
+    SCNetworkSetCopyCurrent, SCNetworkSetGetServiceOrder, SCNetworkSetGetTypeID, SCNetworkSetRef,
 };
+
+use crate::preferences::SCPreferences;
 
 core_foundation::declare_TCFType!(
     /// Represents a network interface.
@@ -189,6 +198,108 @@ pub fn get_interfaces() -> CFArray<SCNetworkInterface> {
     unsafe { CFArray::<SCNetworkInterface>::wrap_under_create_rule(SCNetworkInterfaceCopyAll()) }
 }
 
+core_foundation::declare_TCFType!(
+    /// Represents a network service.
+    ///
+    /// See [`SCNetworkInterfaceRef`] and its [methods] for details.
+    ///
+    /// [`SCNetworkInterfaceRef`]: https://developer.apple.com/documentation/systemconfiguration/scnetworkserviceref?language=objc
+    /// [methods]: https://developer.apple.com/documentation/systemconfiguration/scnetworkconfiguration?language=objc
+    SCNetworkService,
+    SCNetworkServiceRef
+);
+
+core_foundation::impl_TCFType!(
+    SCNetworkService,
+    SCNetworkServiceRef,
+    SCNetworkServiceGetTypeID
+);
+
+impl SCNetworkService {
+    /// Returns an array of all network services
+    pub fn get_services(prefs: &SCPreferences) -> CFArray<Self> {
+        unsafe {
+            let array_ptr = SCNetworkServiceCopyAll(prefs.to_void());
+            if array_ptr.is_null() {
+                return create_empty_array();
+            }
+            CFArray::<Self>::wrap_under_create_rule(array_ptr)
+        }
+    }
+
+    /// Returns true if the network service is currently enabled
+    pub fn enabled(&self) -> bool {
+        unsafe { SCNetworkServiceGetEnabled(self.0) == 0 }
+    }
+
+    /// Returns the network interface backing this network service, if it has one.
+    pub fn network_interface(&self) -> Option<SCNetworkInterface> {
+        unsafe {
+            let ptr = SCNetworkServiceGetInterface(self.0);
+            if ptr.is_null() {
+                None
+            } else {
+                Some(SCNetworkInterface::wrap_under_get_rule(ptr))
+            }
+        }
+    }
+
+    /// Returns the service identifier.
+    pub fn id(&self) -> Option<CFString> {
+        unsafe {
+            let ptr = SCNetworkServiceGetServiceID(self.0);
+            if ptr.is_null() {
+                None
+            } else {
+                Some(CFString::wrap_under_get_rule(ptr))
+            }
+        }
+    }
+}
+
+core_foundation::declare_TCFType!(
+    /// Represents a complete network configuration for a particular host.
+    ///
+    /// See [`SCNetworkSet`] for details.
+    ///
+    /// [`SCNetworkSet`]: https://developer.apple.com/documentation/systemconfiguration/scnetworksetref?language=objc
+    SCNetworkSet,
+    SCNetworkSetRef
+);
+
+core_foundation::impl_TCFType!(SCNetworkSet, SCNetworkSetRef, SCNetworkSetGetTypeID);
+
+impl SCNetworkSet {
+    /// Constructs a new set of network services from the preferences.
+    pub fn new(prefs: &SCPreferences) -> Self {
+        let ptr = unsafe { SCNetworkSetCopyCurrent(prefs.to_void()) };
+        unsafe { SCNetworkSet::wrap_under_create_rule(ptr) }
+    }
+
+    /// Returns an list of network service identifiers, ordered by their priority.
+    pub fn service_order(&self) -> CFArray<CFString> {
+        unsafe {
+            let array_ptr = SCNetworkSetGetServiceOrder(self.0);
+            if array_ptr.is_null() {
+                return create_empty_array();
+            }
+            CFArray::<CFString>::wrap_under_get_rule(array_ptr)
+        }
+    }
+}
+
+fn create_empty_array<T>() -> CFArray<T> {
+    use std::ptr::null;
+    unsafe {
+        CFArray::wrap_under_create_rule(core_foundation::array::CFArrayCreate(
+            null() as *const _,
+            null() as *const _,
+            0,
+            null() as *const _,
+        ))
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -210,5 +321,27 @@ mod test {
                 )
             }
         }
+    }
+
+    #[test]
+    fn test_service_order() {
+        let prefs = SCPreferences::default(&CFString::new("test"));
+        let services = SCNetworkService::get_services(&prefs);
+        let set = SCNetworkSet::new(&prefs);
+        let service_order = set.service_order();
+
+        assert!(service_order.iter().all(|service_id| {
+            services
+                .iter()
+                .find(|service| service.id().as_ref() == Some(&*service_id))
+                .is_some()
+        }))
+    }
+
+    #[test]
+    fn test_empty_array() {
+        let empty = create_empty_array::<CFString>();
+        let values = empty.get_all_values();
+        assert!(values.is_empty())
     }
 }

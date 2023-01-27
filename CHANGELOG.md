@@ -22,6 +22,9 @@ Line wrap the file at 100 chars.                                              Th
 
 
 ## [Unreleased]
+### Added
+- Added bindings for `SCNetworkSet` and `SCNetworkService`
+
 ### Changed
 - Bump minimum supported Rust version to 1.56.0
 
