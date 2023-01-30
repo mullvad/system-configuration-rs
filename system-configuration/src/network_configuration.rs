@@ -222,6 +222,9 @@ impl SCNetworkService {
             // SAFETY: Call to SCNetworkServiceCopyAll is safe since prefs.to_void() must return a
             // valid pointer to a SCPreferences object.
             let array_ptr = SCNetworkServiceCopyAll(prefs.to_void());
+            if array_ptr.is_null() {
+                return create_empty_array();
+            }
             // SAFETY: Call to CFArray::wrap_under_create_rule is safe since
             // SCNetworkSerivceCopyAll will always return a valid pointer, and
             // T::wrap_under_create_rule will panic if the pointer is nil.
@@ -240,7 +243,7 @@ impl SCNetworkService {
     pub fn network_interface(&self) -> Option<SCNetworkInterface> {
         unsafe {
             // SAFETY: Call to SCNetworkServiceGetInterface is safe since pointer to
-            // SCNetorkService is valid for the lifetime of this object.
+            // SCNetworkService is valid for the lifetime of this object.
             let ptr = SCNetworkServiceGetInterface(self.0);
             if ptr.is_null() {
                 None
@@ -293,12 +296,27 @@ impl SCNetworkSet {
     /// Returns an list of network service identifiers, ordered by their priority.
     pub fn service_order(&self) -> CFArray<CFString> {
         // SAFETY: SCNetworkSetGetServiceOrder is safe to call with self.0 since the pointer is
-        // valid for the lifetime of the objet, and constructing the CFArray is safe regardless of
+        // valid for the lifetime of the object, and constructing the CFArray is safe regardless of
         // whether array_ptr is null or not.
         unsafe {
             let array_ptr = SCNetworkSetGetServiceOrder(self.0);
+            if array_ptr.is_null() {
+                return create_empty_array();
+            }
             CFArray::<CFString>::wrap_under_get_rule(array_ptr)
         }
+    }
+}
+
+fn create_empty_array<T>() -> CFArray<T> {
+    use std::ptr::null;
+    unsafe {
+        CFArray::wrap_under_create_rule(core_foundation::array::CFArrayCreate(
+            null() as *const _,
+            null() as *const _,
+            0,
+            null() as *const _,
+        ))
     }
 }
 
@@ -338,5 +356,12 @@ mod test {
                 .find(|service| service.id().as_ref() == Some(&*service_id))
                 .is_some()
         }))
+    }
+
+    #[test]
+    fn test_empty_array() {
+        let empty = create_empty_array::<CFString>();
+        let values = empty.get_all_values();
+        assert!(values.is_empty())
     }
 }
