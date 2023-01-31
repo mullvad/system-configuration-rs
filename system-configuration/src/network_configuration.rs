@@ -219,38 +219,26 @@ impl SCNetworkService {
     /// Returns an array of all network services
     pub fn get_services(prefs: &SCPreferences) -> CFArray<Self> {
         unsafe {
-            // SAFETY: Call to SCNetworkServiceCopyAll is safe since prefs.to_void() must return a
-            // valid pointer to a SCPreferences object.
             let array_ptr = SCNetworkServiceCopyAll(prefs.to_void());
             if array_ptr.is_null() {
                 return create_empty_array();
             }
-            // SAFETY: Call to CFArray::wrap_under_create_rule is safe since
-            // SCNetworkSerivceCopyAll will always return a valid pointer, and
-            // T::wrap_under_create_rule will panic if the pointer is nil.
             CFArray::<Self>::wrap_under_create_rule(array_ptr)
         }
     }
 
     /// Returns true if the network service is currently enabled
     pub fn enabled(&self) -> bool {
-        // SAFETY: Call to SCNetworkServiceGetEnabled is safe since the pointer SCNetworkService is
-        // valid throughout the lifetime of this object.
         unsafe { SCNetworkServiceGetEnabled(self.0) == 0 }
     }
 
     /// Returns the network interface backing this network service, if it has one.
     pub fn network_interface(&self) -> Option<SCNetworkInterface> {
         unsafe {
-            // SAFETY: Call to SCNetworkServiceGetInterface is safe since pointer to
-            // SCNetworkService is valid for the lifetime of this object.
             let ptr = SCNetworkServiceGetInterface(self.0);
             if ptr.is_null() {
                 None
             } else {
-                // SAFETY: SCNetworkInterface::wrap_under_get_rule is safe to call since the
-                // pointer is not null and it is assumed that SCNetworkServiceGetInterface would
-                // return a reference to the appropriate type (SCNetworkInterface).
                 Some(SCNetworkInterface::wrap_under_get_rule(ptr))
             }
         }
@@ -259,15 +247,10 @@ impl SCNetworkService {
     /// Returns the service identifier.
     pub fn id(&self) -> Option<CFString> {
         unsafe {
-            // SAFETY: Call to SCNetworkServiceGetServiceID is safe since pointer to
-            // SCNetorkService is valid for the lifetime of this object.
             let ptr = SCNetworkServiceGetServiceID(self.0);
             if ptr.is_null() {
                 None
             } else {
-                // SAFETY: CFString::wrap_under_get_rule is safe to call since the
-                // pointer is not null and it is assumed that SCNetworkServiceGetServiceID would
-                // return a reference to the appropriate type (CFString).
                 Some(CFString::wrap_under_get_rule(ptr))
             }
         }
@@ -295,9 +278,6 @@ impl SCNetworkSet {
 
     /// Returns an list of network service identifiers, ordered by their priority.
     pub fn service_order(&self) -> CFArray<CFString> {
-        // SAFETY: SCNetworkSetGetServiceOrder is safe to call with self.0 since the pointer is
-        // valid for the lifetime of the object, and constructing the CFArray is safe regardless of
-        // whether array_ptr is null or not.
         unsafe {
             let array_ptr = SCNetworkSetGetServiceOrder(self.0);
             if array_ptr.is_null() {
