@@ -103,8 +103,6 @@ pub enum SCNetworkInterfaceType {
     SixToFour,
     /// Bluetooth interface.
     Bluetooth,
-    /// Bridge interface.
-    Bridge,
     /// Ethernet bond interface.
     Bond,
     /// Ethernet interface.
@@ -115,8 +113,6 @@ pub enum SCNetworkInterfaceType {
     IEEE80211,
     /// IPSec interface.
     IPSec,
-    /// IrDA interface.
-    IrDA,
     /// L2TP interface.
     L2TP,
     /// Modem interface.
@@ -152,8 +148,6 @@ impl SCNetworkInterfaceType {
                 Some(SCNetworkInterfaceType::SixToFour)
             } else if id_is_equal_to(kSCNetworkInterfaceTypeBluetooth) {
                 Some(SCNetworkInterfaceType::Bluetooth)
-            } else if id_is_equal_to(kSCNetworkInterfaceTypeBridge) {
-                Some(SCNetworkInterfaceType::Bridge)
             } else if id_is_equal_to(kSCNetworkInterfaceTypeBond) {
                 Some(SCNetworkInterfaceType::Bond)
             } else if id_is_equal_to(kSCNetworkInterfaceTypeEthernet) {
@@ -164,8 +158,6 @@ impl SCNetworkInterfaceType {
                 Some(SCNetworkInterfaceType::IEEE80211)
             } else if id_is_equal_to(kSCNetworkInterfaceTypeIPSec) {
                 Some(SCNetworkInterfaceType::IPSec)
-            } else if id_is_equal_to(kSCNetworkInterfaceTypeIrDA) {
-                Some(SCNetworkInterfaceType::IrDA)
             } else if id_is_equal_to(kSCNetworkInterfaceTypeL2TP) {
                 Some(SCNetworkInterfaceType::L2TP)
             } else if id_is_equal_to(kSCNetworkInterfaceTypeModem) {
