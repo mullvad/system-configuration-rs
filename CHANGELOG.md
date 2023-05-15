@@ -22,6 +22,9 @@ Line wrap the file at 100 chars.                                              Th
 
 
 ## [Unreleased]
+
+
+## [0.5.1] - 2023-05-15
 ### Added
 - Add bindings for `SCNetworkSet` and `SCNetworkService`
 
