@@ -19,8 +19,10 @@
 
 #![deny(missing_docs)]
 
+/// CoreFoundation wrappers
 #[macro_use]
 pub extern crate core_foundation;
+/// Low-level SystemConfiguration bindings
 pub extern crate system_configuration_sys as sys;
 
 pub mod dynamic_store;
