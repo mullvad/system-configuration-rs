@@ -126,8 +126,6 @@ extern "C" {
 
     pub static kSCNetworkInterfaceTypeBond: CFStringRef;
 
-    pub static kSCNetworkInterfaceTypeBridge: CFStringRef;
-
     pub static kSCNetworkInterfaceTypeEthernet: CFStringRef;
 
     pub static kSCNetworkInterfaceTypeFireWire: CFStringRef;
@@ -135,8 +133,6 @@ extern "C" {
     pub static kSCNetworkInterfaceTypeIEEE80211: CFStringRef;
 
     pub static kSCNetworkInterfaceTypeIPSec: CFStringRef;
-
-    pub static kSCNetworkInterfaceTypeIrDA: CFStringRef;
 
     pub static kSCNetworkInterfaceTypeL2TP: CFStringRef;
 
