@@ -86,11 +86,11 @@ BINDGEN_COMMON_ARGUMENTS=(
 echo "Generating bindings for $PREFERENCES_HEADER_PATH"
 bindgen \
     "${BINDGEN_COMMON_ARGUMENTS[@]}" \
-    --whitelist-function "SCPreferences.*" \
-    --blacklist-type "(__)?CF.*" \
-    --blacklist-type "Boolean" \
-    --blacklist-type "dispatch_queue_[ts]" \
-    --blacklist-type "(AuthorizationOpaqueRef|__SCPreferences)" \
+    --allowlist-function "SCPreferences.*" \
+    --blocklist-type "(__)?CF.*" \
+    --blocklist-type "Boolean" \
+    --blocklist-type "dispatch_queue_[ts]" \
+    --blocklist-type "(AuthorizationOpaqueRef|__SCPreferences)" \
     --raw-line "use core::ffi::c_void;" \
     --raw-line "use core_foundation_sys::array::CFArrayRef;" \
     --raw-line "use core_foundation_sys::base::{Boolean, CFIndex, CFAllocatorRef, CFTypeID};" \
@@ -116,11 +116,11 @@ echo "Generating bindings for $DYNAMIC_STORE_HEADER_PATH"
 
 bindgen \
     "${BINDGEN_COMMON_ARGUMENTS[@]}" \
-    --whitelist-function "SCDynamicStore.*" \
-    --whitelist-var "kSCDynamicStore.*" \
-    --blacklist-type "(__)?CF.*" \
-    --blacklist-type "Boolean" \
-    --blacklist-type "dispatch_queue_[ts]" \
+    --allowlist-function "SCDynamicStore.*" \
+    --allowlist-var "kSCDynamicStore.*" \
+    --blocklist-type "(__)?CF.*" \
+    --blocklist-type "Boolean" \
+    --blocklist-type "dispatch_queue_[ts]" \
     --raw-line "use core::ffi::c_void;" \
     --raw-line "use core_foundation_sys::array::CFArrayRef;" \
     --raw-line "use core_foundation_sys::base::{Boolean, CFIndex, CFAllocatorRef, CFTypeID};" \
@@ -143,16 +143,14 @@ echo "Generating bindings for $DYNAMIC_STORE_COPY_SPECIFIC_HEADER_PATH"
 
 bindgen \
     "${BINDGEN_COMMON_ARGUMENTS[@]}" \
-    --whitelist-function "SCDynamicStoreCopy(ComputerName|ConsoleUser|LocalHostName|Location|Proxies)" \
-    --blacklist-type "(__)?CF.*" \
-    --blacklist-type "Boolean" \
-    --blacklist-type "dispatch_queue_[ts]" \
-    --blacklist-type "(__)?SCDynamicStore.*" \
+    --allowlist-function "SCDynamicStoreCopy(ComputerName|ConsoleUser|LocalHostName|Location|Proxies)" \
+    --blocklist-type "(__)?CF.*" \
+    --blocklist-type "Boolean" \
+    --blocklist-type "dispatch_queue_[ts]" \
+    --blocklist-type "(__)?SCDynamicStore.*" \
     --raw-line "use core_foundation_sys::string::{CFStringEncoding, CFStringRef};" \
     --raw-line "use core_foundation_sys::dictionary::CFDictionaryRef;" \
     --raw-line "use crate::dynamic_store::SCDynamicStoreRef;" \
-    --raw-line "" \
-    --raw-line "use libc::c_uint;" \
     -o $DYNAMIC_STORE_COPY_SPECIFIC_BINDING_PATH \
     $DYNAMIC_STORE_COPY_SPECIFIC_HEADER_PATH -- \
     -I$SDK_PATH/usr/include \
@@ -166,17 +164,17 @@ echo "Generating bindings for $NETWORK_CONFIGURATION_HEADER_PATH"
 
 bindgen \
     "${BINDGEN_COMMON_ARGUMENTS[@]}" \
-    --whitelist-function "SCNetwork.*" \
-    --whitelist-function "SCBondInterface.*" \
-    --whitelist-var "kSC(NetworkInterface|BondStatus).*" \
-    --blacklist-type "SCNetworkReachability.*" \
-    --blacklist-function "SCNetworkReachability.*" \
-    --blacklist-type "dispatch_queue_[ts]" \
-    --blacklist-type "(__)?CF.*" \
-    --blacklist-type "__SC.*" \
-    --blacklist-type "Boolean" \
-    --blacklist-type "(sockaddr|socklen_t|sa_family_t|__darwin_socklen_t|__uint.*_t)" \
-    --blacklist-type "(__)?SCPreferences.*" \
+    --allowlist-function "SCNetwork.*" \
+    --allowlist-function "SCBondInterface.*" \
+    --allowlist-var "kSC(NetworkInterface|BondStatus).*" \
+    --blocklist-type "SCNetworkReachability.*" \
+    --blocklist-function "SCNetworkReachability.*" \
+    --blocklist-type "dispatch_queue_[ts]" \
+    --blocklist-type "(__)?CF.*" \
+    --blocklist-type "__SC.*" \
+    --blocklist-type "Boolean" \
+    --blocklist-type "(sockaddr|socklen_t|sa_family_t|__darwin_socklen_t|__uint.*_t)" \
+    --blocklist-type "(__)?SCPreferences.*" \
     --raw-line "use core::ffi::c_void;" \
     --raw-line "use core_foundation_sys::array::CFArrayRef;" \
     --raw-line "use core_foundation_sys::base::{Boolean, CFIndex, CFAllocatorRef, CFTypeID};" \
@@ -185,7 +183,7 @@ bindgen \
     --raw-line "use core_foundation_sys::runloop::CFRunLoopRef;" \
     --raw-line "" \
     --raw-line "use crate::dispatch_queue_t;" \
-    --raw-line "use libc::{c_char, c_int, sockaddr, socklen_t};" \
+    --raw-line "use libc::{sockaddr, socklen_t};" \
     --raw-line "use crate::preferences::SCPreferencesRef;" \
     --raw-line "" \
     --raw-line "pub type __SCNetworkConnection = c_void;" \
@@ -207,23 +205,23 @@ echo "Generating bindings for $NETWORK_REACHABILITY_HEADER_PATH"
 
 bindgen \
     "${BINDGEN_COMMON_ARGUMENTS[@]}" \
-    --whitelist-function "SCNetworkReachability.*" \
-    --whitelist-type "SCNetworkReachability.*" \
-    --whitelist-var "kSCNetworkReachability.*" \
-    --blacklist-type "sockaddr" \
-    --blacklist-type "dispatch_queue_[ts]" \
-    --blacklist-type "(__)?CF.*" \
-    --blacklist-type "__SC.*" \
-    --blacklist-type "Boolean" \
-    --blacklist-type "dispatch_.*" \
-    --blacklist-type "(sockaddr|socklen_t|sa_family_t|__darwin_socklen_t|__uint.*_t)" \
+    --allowlist-function "SCNetworkReachability.*" \
+    --allowlist-type "SCNetworkReachability.*" \
+    --allowlist-var "kSCNetworkReachability.*" \
+    --blocklist-type "sockaddr" \
+    --blocklist-type "dispatch_queue_[ts]" \
+    --blocklist-type "(__)?CF.*" \
+    --blocklist-type "__SC.*" \
+    --blocklist-type "Boolean" \
+    --blocklist-type "dispatch_.*" \
+    --blocklist-type "(sockaddr|socklen_t|sa_family_t|__darwin_socklen_t|__uint.*_t)" \
     --raw-line '#![cfg_attr(feature = "cargo-clippy", allow(clippy::unreadable_literal))]' \
     --raw-line "use core_foundation_sys::base::{Boolean, CFAllocatorRef, CFTypeID, CFIndex};" \
     --raw-line "use core_foundation_sys::string::CFStringRef;" \
     --raw-line "use core_foundation_sys::runloop::CFRunLoopRef;" \
-    --raw-line "use libc::{c_char, sockaddr, c_void};" \
+    --raw-line "use libc::sockaddr;" \
     --raw-line "use crate::dispatch_queue_t;" \
-    --raw-line "pub type __SCNetworkReachability = c_void;" \
+    --raw-line "pub type __SCNetworkReachability = ::core::ffi::c_void;" \
     -o $NETWORK_REACHABILITY_BINDING_PATH \
     $NETWORK_REACHABILITY_HEADER_PATH -- \
     -I$SDK_PATH/usr/include \
@@ -238,9 +236,9 @@ echo "Generating bindings for $SCHEMA_DEFINITIONS_HEADER_PATH"
 
 bindgen \
     "${BINDGEN_COMMON_ARGUMENTS[@]}" \
-    --whitelist-var "kSC.*" \
-    --blacklist-type "(__)?CF.*" \
-    --blacklist-type "dispatch_queue_[ts]" \
+    --allowlist-var "kSC.*" \
+    --blocklist-type "(__)?CF.*" \
+    --blocklist-type "dispatch_queue_[ts]" \
     --raw-line "use core_foundation_sys::string::CFStringRef;" \
     --raw-line "" \
     -o $SCHEMA_DEFINITIONS_BINDING_PATH \
