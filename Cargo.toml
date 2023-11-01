@@ -3,3 +3,4 @@ members = [
     "system-configuration-sys",
     "system-configuration",
 ]
+resolver = "2"

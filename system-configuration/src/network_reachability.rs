@@ -297,7 +297,7 @@ impl<T: Fn(ReachabilityFlags) + Sync + Send> NetworkReachabilityCallbackContext<
         context: *mut c_void,
     ) {
         let context: &mut Self = unsafe { &mut (*(context as *mut _)) };
-        (context.callback)(unsafe { ReachabilityFlags::from_bits_unchecked(flags) });
+        (context.callback)(ReachabilityFlags::from_bits_retain(flags));
     }
 
     extern "C" fn copy_ctx_description(_ctx: *const c_void) -> CFStringRef {
