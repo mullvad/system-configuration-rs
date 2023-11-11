@@ -103,8 +103,6 @@ pub enum SCNetworkInterfaceType {
     SixToFour,
     /// Bluetooth interface.
     Bluetooth,
-    /// Bridge interface.
-    Bridge,
     /// Ethernet bond interface.
     Bond,
     /// Ethernet interface.
@@ -152,8 +150,6 @@ impl SCNetworkInterfaceType {
                 Some(SCNetworkInterfaceType::SixToFour)
             } else if id_is_equal_to(kSCNetworkInterfaceTypeBluetooth) {
                 Some(SCNetworkInterfaceType::Bluetooth)
-            } else if id_is_equal_to(kSCNetworkInterfaceTypeBridge) {
-                Some(SCNetworkInterfaceType::Bridge)
             } else if id_is_equal_to(kSCNetworkInterfaceTypeBond) {
                 Some(SCNetworkInterfaceType::Bond)
             } else if id_is_equal_to(kSCNetworkInterfaceTypeEthernet) {
