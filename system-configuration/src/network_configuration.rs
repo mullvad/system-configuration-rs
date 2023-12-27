@@ -137,6 +137,12 @@ pub enum SCNetworkInterfaceType {
     IPv4,
 }
 
+/// Bridge interface type referred to as `kSCNetworkInterfaceTypeBridge` in private headers.
+static BRIDGE_INTERFACE_TYPE_ID: &str = "Bridge";
+
+/// IrDA interface referenced as `kSCNetworkInterfaceTypeIrDA` but deprecated since macOS 12.
+static IRDA_INTERFACE_TYPE_ID: &str = "IrDA";
+
 impl SCNetworkInterfaceType {
     /// Tries to construct a type by matching it to string constants used to identify a network
     /// interface type. If no constants match it, `None` is returned.
@@ -152,7 +158,7 @@ impl SCNetworkInterfaceType {
                 Some(SCNetworkInterfaceType::SixToFour)
             } else if id_is_equal_to(kSCNetworkInterfaceTypeBluetooth) {
                 Some(SCNetworkInterfaceType::Bluetooth)
-            } else if id_is_equal_to(kSCNetworkInterfaceTypeBridge) {
+            } else if type_id == &BRIDGE_INTERFACE_TYPE_ID {
                 Some(SCNetworkInterfaceType::Bridge)
             } else if id_is_equal_to(kSCNetworkInterfaceTypeBond) {
                 Some(SCNetworkInterfaceType::Bond)
@@ -164,7 +170,7 @@ impl SCNetworkInterfaceType {
                 Some(SCNetworkInterfaceType::IEEE80211)
             } else if id_is_equal_to(kSCNetworkInterfaceTypeIPSec) {
                 Some(SCNetworkInterfaceType::IPSec)
-            } else if id_is_equal_to(kSCNetworkInterfaceTypeIrDA) {
+            } else if type_id == &IRDA_INTERFACE_TYPE_ID {
                 Some(SCNetworkInterfaceType::IrDA)
             } else if id_is_equal_to(kSCNetworkInterfaceTypeL2TP) {
                 Some(SCNetworkInterfaceType::L2TP)

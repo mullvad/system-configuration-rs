@@ -22,6 +22,8 @@ Line wrap the file at 100 chars.                                              Th
 
 
 ## [Unreleased]
+### Changed
+- Bump minimum supported Rust version (MSRV) to 1.64.0.
 
 
 ## [0.5.1] - 2023-05-15
