@@ -247,29 +247,32 @@ impl SCNetworkReachability {
 
         let mut callback_context = SCNetworkReachabilityContext {
             version: 0,
-            info: Arc::as_ptr(&callback) as *mut _,
+            info: Arc::into_raw(callback) as *mut _,
             retain: Some(NetworkReachabilityCallbackContext::<F>::retain_context),
             release: Some(NetworkReachabilityCallbackContext::<F>::release_context),
             copyDescription: Some(NetworkReachabilityCallbackContext::<F>::copy_ctx_description),
         };
 
-        if unsafe {
-            // The call to SCNetworkReachabilitySetCallback will call the
-            // `retain` callback which will increment the reference count on
-            // `callback`. Therefore, although `callback` is dropped when this
-            // function goes out of scope, the reference count will still be >0.
-            //
-            // When `SCNetworkReachability` is dropped, `release` is called
-            // which will drop the reference count on `callback` to 0.
-            //
-            // Assumes the pointer pointed to by the `info` member of `callback_context` is still valid.
+        let result = unsafe {
             SCNetworkReachabilitySetCallback(
                 self.0,
                 Some(NetworkReachabilityCallbackContext::<F>::callback),
                 &mut callback_context,
             )
-        } == 0u8
-        {
+        };
+
+        // The call to SCNetworkReachabilitySetCallback will call the
+        // `retain` callback which will increment the reference count on
+        // `callback`. Therefore, although the count is decremented below,
+        // the reference count will still be >0.
+        //
+        // When `SCNetworkReachability` is dropped, `release` is called
+        // which will drop the reference count on `callback` to 0.
+        //
+        // Assumes the pointer pointed to by the `info` member of `callback_context` is still valid.
+        unsafe { Arc::decrement_strong_count(callback_context.info) };
+
+        if result == 0u8 {
             Err(SetCallbackError {})
         } else {
             Ok(())
