@@ -25,6 +25,9 @@ Line wrap the file at 100 chars.                                              Th
 ### Changed
 - Bump minimum supported Rust version (MSRV) to 1.64.0.
 
+### Fixed
+- Fix memory leak in `SCNetworkReachability::set_callback`.
+
 
 ## [0.5.1] - 2023-05-15
 ### Added
