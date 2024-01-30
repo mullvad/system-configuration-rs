@@ -196,13 +196,11 @@ impl SCNetworkReachability {
         run_loop: &CFRunLoop,
         run_loop_mode: CFStringRef,
     ) -> Result<(), SchedulingError> {
-        if unsafe {
-            SCNetworkReachabilityScheduleWithRunLoop(
-                self.0,
-                run_loop.to_void() as *mut _,
-                run_loop_mode,
-            )
-        } == 0u8
+        if SCNetworkReachabilityScheduleWithRunLoop(
+            self.0,
+            run_loop.to_void() as *mut _,
+            run_loop_mode,
+        ) == 0u8
         {
             Err(SchedulingError(()))
         } else {
@@ -225,13 +223,11 @@ impl SCNetworkReachability {
         run_loop: &CFRunLoop,
         run_loop_mode: CFStringRef,
     ) -> Result<(), UnschedulingError> {
-        if unsafe {
-            SCNetworkReachabilityUnscheduleFromRunLoop(
-                self.0,
-                run_loop.to_void() as *mut _,
-                run_loop_mode,
-            )
-        } == 0u8
+        if SCNetworkReachabilityUnscheduleFromRunLoop(
+            self.0,
+            run_loop.to_void() as *mut _,
+            run_loop_mode,
+        ) == 0u8
         {
             Err(UnschedulingError(()))
         } else {
