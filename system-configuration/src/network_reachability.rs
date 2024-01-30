@@ -393,14 +393,15 @@ mod test {
                 addr
             );
             reachability.set_callback(|_| {}).unwrap();
-            reachability
-                .schedule_with_runloop(&CFRunLoop::get_current(), unsafe { kCFRunLoopCommonModes })
-                .unwrap();
-            reachability
-                .unschedule_from_runloop(&CFRunLoop::get_current(), unsafe {
-                    kCFRunLoopCommonModes
-                })
-                .unwrap();
+            // SAFETY: We use the Apple provided run_loop_mode kCFRunLoopCommonModes
+            unsafe {
+                reachability
+                    .schedule_with_runloop(&CFRunLoop::get_current(), kCFRunLoopCommonModes)
+                    .unwrap();
+                reachability
+                    .unschedule_from_runloop(&CFRunLoop::get_current(), kCFRunLoopCommonModes)
+                    .unwrap();
+            }
         }
     }
 
@@ -424,14 +425,15 @@ mod test {
                 remote
             );
             reachability.set_callback(|_| {}).unwrap();
-            reachability
-                .schedule_with_runloop(&CFRunLoop::get_current(), unsafe { kCFRunLoopCommonModes })
-                .unwrap();
-            reachability
-                .unschedule_from_runloop(&CFRunLoop::get_current(), unsafe {
-                    kCFRunLoopCommonModes
-                })
-                .unwrap();
+            // SAFETY: We use the Apple provided run_loop_mode kCFRunLoopCommonModes
+            unsafe {
+                reachability
+                    .schedule_with_runloop(&CFRunLoop::get_current(), kCFRunLoopCommonModes)
+                    .unwrap();
+                reachability
+                    .unschedule_from_runloop(&CFRunLoop::get_current(), kCFRunLoopCommonModes)
+                    .unwrap();
+            }
         }
     }
 
@@ -445,16 +447,18 @@ mod test {
             match SCNetworkReachability::from_host(&input) {
                 Some(mut reachability) => {
                     reachability.set_callback(|_| {}).unwrap();
-                    reachability
-                        .schedule_with_runloop(&CFRunLoop::get_current(), unsafe {
-                            kCFRunLoopCommonModes
-                        })
-                        .unwrap();
-                    reachability
-                        .unschedule_from_runloop(&CFRunLoop::get_current(), unsafe {
-                            kCFRunLoopCommonModes
-                        })
-                        .unwrap();
+                    // SAFETY: We use the Apple provided run_loop_mode kCFRunLoopCommonModes
+                    unsafe {
+                        reachability
+                            .schedule_with_runloop(&CFRunLoop::get_current(), kCFRunLoopCommonModes)
+                            .unwrap();
+                        reachability
+                            .unschedule_from_runloop(
+                                &CFRunLoop::get_current(),
+                                kCFRunLoopCommonModes,
+                            )
+                            .unwrap();
+                    }
                 }
                 None => {
                     panic!(
@@ -481,9 +485,12 @@ mod test {
             let mut reachability =
                 SCNetworkReachability::from("0.0.0.0:0".parse::<SocketAddr>().unwrap());
             reachability.set_callback(|_| {}).unwrap();
-            reachability
-                .schedule_with_runloop(&CFRunLoop::get_current(), unsafe { kCFRunLoopCommonModes })
-                .unwrap();
+            // SAFETY: We use the Apple provided run_loop_mode kCFRunLoopCommonModes
+            unsafe {
+                reachability
+                    .schedule_with_runloop(&CFRunLoop::get_current(), kCFRunLoopCommonModes)
+                    .unwrap();
+            }
             reachability.set_callback(|_| {}).unwrap();
             let _ = tx.send(reachability);
             CFRunLoop::run_current();
