@@ -186,7 +186,12 @@ impl SCNetworkReachability {
     /// See [`SCNetworkReachabilityScheduleFromRunLoop`] for details.
     ///
     /// [`SCNetworkReachabilityScheduleFromRunLoop`]: https://developer.apple.com/documentation/systemconfiguration/1514894-scnetworkreachabilityschedulewit?language=objc
-    pub fn schedule_with_runloop(
+    ///
+    /// # Safety
+    ///
+    /// The `run_loop_mode` must not be NULL and must be a pointer to a valid run loop mode.
+    /// Use `core_foundation::runloop::kCFRunLoopCommonModes` if you are unsure.
+    pub unsafe fn schedule_with_runloop(
         &self,
         run_loop: &CFRunLoop,
         run_loop_mode: CFStringRef,
@@ -210,7 +215,12 @@ impl SCNetworkReachability {
     /// See [`SCNetworkReachabilityUnscheduleFromRunLoop`] for details.
     ///
     /// [`SCNetworkReachabilityUnscheduleFromRunLoop`]: https://developer.apple.com/documentation/systemconfiguration/1514899-scnetworkreachabilityunschedulef?language=objc
-    pub fn unschedule_from_runloop(
+    ///
+    /// # Safety
+    ///
+    /// The `run_loop_mode` must not be NULL and must be a pointer to a valid run loop mode.
+    /// Use `core_foundation::runloop::kCFRunLoopCommonModes` if you are unsure.
+    pub unsafe fn unschedule_from_runloop(
         &self,
         run_loop: &CFRunLoop,
         run_loop_mode: CFStringRef,
