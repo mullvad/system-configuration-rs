@@ -24,6 +24,9 @@ Line wrap the file at 100 chars.                                              Th
 ## [Unreleased]
 ### Changed
 - Bump minimum supported Rust version (MSRV) to 1.64.0.
+- Breaking: Mark `SCNetworkReachability::schedule_with_runloop` and `unschedule_from_runloop` as
+  `unsafe`. They accept a raw pointer that it dereferences. Figuring out a safe API around this is
+  left as an exercise for the future.
 
 ### Fixed
 - Fix memory leak in `SCNetworkReachability::set_callback`.
