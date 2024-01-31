@@ -85,6 +85,7 @@ bitflags::bitflags! {
     /// Rustier interface for [`SCNetworkReachabilityFlags`].
     ///
     /// [`SCNetworkReachability`]: https://developer.apple.com/documentation/systemconfiguration/scnetworkreachabilityflags
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
     pub struct ReachabilityFlags: u32 {
         /// The specified node name or address can be reached via a transient connection, such as
         /// PPP.
