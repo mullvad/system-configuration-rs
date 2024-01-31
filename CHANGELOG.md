@@ -22,6 +22,8 @@ Line wrap the file at 100 chars.                                              Th
 
 
 ## [Unreleased]
+
+## [0.6.0] - 2024-01-31
 ### Changed
 - Bump minimum supported Rust version (MSRV) to 1.64.0.
 - Breaking: Mark `SCNetworkReachability::schedule_with_runloop` and `unschedule_from_runloop` as
@@ -32,6 +34,9 @@ Line wrap the file at 100 chars.                                              Th
 
 ### Fixed
 - Fix memory leak in `SCNetworkReachability::set_callback`.
+- Fix builds on iOS by removing references to deprecated interface type
+  `kSCNetworkInterfaceTypeIrDA`. Also remove constant for bridge network interfaces
+  (`kSCNetworkInterfaceTypeBridge`).
 
 
 ## [0.5.1] - 2023-05-15
