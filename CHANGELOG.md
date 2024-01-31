@@ -27,6 +27,8 @@ Line wrap the file at 100 chars.                                              Th
 - Breaking: Mark `SCNetworkReachability::schedule_with_runloop` and `unschedule_from_runloop` as
   `unsafe`. They accept a raw pointer that it dereferences. Figuring out a safe API around this is
   left as an exercise for the future.
+- Breaking: `ReachabilityFlags` no longer implements `Ord` or `PartialOrd`. It also replaces the
+  `from_bits_unchecked` constructor with other (safe) `from_bits_*` constructors.
 
 ### Fixed
 - Fix memory leak in `SCNetworkReachability::set_callback`.
