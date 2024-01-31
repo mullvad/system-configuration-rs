@@ -1,6 +1,6 @@
 [package]
 name = "system-configuration"
-version = "0.5.1"
+version = "0.6.0"
 authors = ["Mullvad VPN"]
 description = "Bindings to SystemConfiguration framework for macOS"
 keywords = ["macos", "system", "configuration", "bindings"]
@@ -12,5 +12,5 @@ edition = "2021"
 
 [dependencies]
 core-foundation = "0.9"
-system-configuration-sys = { path = "../system-configuration-sys", version = "0.5" }
+system-configuration-sys = { path = "../system-configuration-sys", version = "0.6" }
 bitflags = "2"

@@ -22,6 +22,8 @@ Line wrap the file at 100 chars.                                              Th
 
 
 ## [Unreleased]
+
+## [0.6.0] - 2024-01-31
 ### Changed
 - Bump minimum supported Rust version (MSRV) to 1.64.0.
 - Breaking: Mark `SCNetworkReachability::schedule_with_runloop` and `unschedule_from_runloop` as
