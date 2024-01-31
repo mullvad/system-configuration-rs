@@ -32,6 +32,9 @@ Line wrap the file at 100 chars.                                              Th
 
 ### Fixed
 - Fix memory leak in `SCNetworkReachability::set_callback`.
+- Fix builds on iOS by removing references to deprecated interface type
+  `kSCNetworkInterfaceTypeIrDA`. Also remove constant for bridge network interfaces
+  (`kSCNetworkInterfaceTypeBridge`).
 
 
 ## [0.5.1] - 2023-05-15
