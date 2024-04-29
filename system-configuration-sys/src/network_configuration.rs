@@ -134,8 +134,6 @@ extern "C" {
 
     pub static kSCNetworkInterfaceTypeIPSec: CFStringRef;
 
-    pub static kSCNetworkInterfaceTypeIrDA: CFStringRef;
-
     pub static kSCNetworkInterfaceTypeL2TP: CFStringRef;
 
     pub static kSCNetworkInterfaceTypeModem: CFStringRef;

@@ -160,8 +160,6 @@ impl SCNetworkInterfaceType {
                 Some(SCNetworkInterfaceType::IEEE80211)
             } else if id_is_equal_to(kSCNetworkInterfaceTypeIPSec) {
                 Some(SCNetworkInterfaceType::IPSec)
-            } else if id_is_equal_to(kSCNetworkInterfaceTypeIrDA) {
-                Some(SCNetworkInterfaceType::IrDA)
             } else if id_is_equal_to(kSCNetworkInterfaceTypeL2TP) {
                 Some(SCNetworkInterfaceType::L2TP)
             } else if id_is_equal_to(kSCNetworkInterfaceTypeModem) {
