@@ -339,8 +339,7 @@ mod test {
         assert!(service_order.iter().all(|service_id| {
             services
                 .iter()
-                .find(|service| service.id().as_ref() == Some(&*service_id))
-                .is_some()
+                .any(|service| service.id().as_ref() == Some(&*service_id))
         }))
     }
 

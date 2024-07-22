@@ -468,7 +468,7 @@ mod test {
 
         // Can only testify that an empty string is invalid, everything else seems to work
         assert!(
-            !SCNetworkReachability::from_host(&get_cstring("")).is_some(),
+            SCNetworkReachability::from_host(&get_cstring("")).is_none(),
             "Constructed valid SCNetworkReachability from empty string"
         );
     }
