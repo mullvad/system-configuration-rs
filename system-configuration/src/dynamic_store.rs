@@ -74,7 +74,7 @@ impl SCDynamicStoreBuilder<()> {
     }
 }
 
-impl<T> SCDynamicStoreBuilder<T> {
+impl<T: Send + Sync + 'static> SCDynamicStoreBuilder<T> {
     /// Set wether or not the created [`SCDynamicStore`] should have session keys or not.
     /// See [`SCDynamicStoreCreateWithOptions`] for details.
     ///
