@@ -344,28 +344,47 @@ impl<T: Fn(ReachabilityFlags) + Sync + Send> NetworkReachabilityCallbackContext<
 /// libc::sockaddr_in6, depending on the passed in standard library SocketAddr.
 fn to_c_sockaddr(addr: SocketAddr) -> Box<libc::sockaddr> {
     let ptr = match addr {
+        // See reference conversion from socket2: 
+        // https://github.com/rust-lang/socket2/blob/3a938932829ea6ee3025d2d7a86c7b095c76e6c3/src/sockaddr.rs#L277-L287
         SocketAddr::V4(addr) => Box::into_raw(Box::new(libc::sockaddr_in {
             sin_len: std::mem::size_of::<libc::sockaddr_in>() as u8,
-            sin_family: libc::AF_INET as u8,
-            sin_port: addr.port(),
-            sin_addr: libc::in_addr {
-                s_addr: u32::from(*addr.ip()),
-            },
-            sin_zero: [0i8; 8],
+            sin_family: libc::AF_INET as libc::sa_family_t,
+            sin_port: addr.port().to_be(),
+            sin_addr: to_in_addr(addr.ip()),
+            sin_zero: Default::default(),
         })) as *mut c_void,
+        // See reference conversion from socket2:
+        // https://github.com/rust-lang/socket2/blob/3a938932829ea6ee3025d2d7a86c7b095c76e6c3/src/sockaddr.rs#L314-L331
         SocketAddr::V6(addr) => Box::into_raw(Box::new(libc::sockaddr_in6 {
             sin6_len: std::mem::size_of::<libc::sockaddr_in6>() as u8,
-            sin6_family: libc::AF_INET6 as u8,
-            sin6_port: addr.port(),
-            sin6_flowinfo: 0,
-            sin6_addr: libc::in6_addr {
-                s6_addr: addr.ip().octets(),
-            },
-            sin6_scope_id: 0,
+            sin6_family: libc::AF_INET6 as libc::sa_family_t,
+            sin6_port: addr.port().to_be(),
+            sin6_flowinfo: addr.flowinfo(),
+            sin6_addr: to_in6_addr(addr.ip()),
+            sin6_scope_id: addr.scope_id(),
         })) as *mut c_void,
     };
 
     unsafe { Box::from_raw(ptr as *mut _) }
+}
+
+// Reference implementation:
+// https://github.com/rust-lang/socket2/blob/3a938932829ea6ee3025d2d7a86c7b095c76e6c3/src/sys/unix.rs#L1356-L1363
+const fn to_in_addr(addr: &std::net::Ipv4Addr) -> libc::in_addr {
+    // `s_addr` is stored as BE on all machines, and the array is in BE order.
+    // So the native endian conversion method is used so that it's never
+    // swapped.
+    libc::in_addr {
+        s_addr: u32::from_ne_bytes(addr.octets()),
+    }
+}
+
+// Reference implementation:
+// https://github.com/rust-lang/socket2/blob/3a938932829ea6ee3025d2d7a86c7b095c76e6c3/src/sys/unix.rs#L1369-L1373
+const fn to_in6_addr(addr: &std::net::Ipv6Addr) -> libc::in6_addr {
+    libc::in6_addr {
+        s6_addr: addr.octets(),
+    }
 }
 
 #[cfg(test)]
@@ -432,6 +451,19 @@ mod test {
                     .unwrap();
             }
         }
+    }
+
+    #[test]
+    fn test_sockaddr_local_to_dns_google_pair_reachability() {
+        let Ok(dns_google) = std::net::TcpStream::connect("8.8.4.4:443") else {
+            eprintln!("test skipped due to inability to connect to well-known endpoint (dns.google:443)");
+            return;
+        };
+        let local = dns_google.local_addr().unwrap();
+        let remote = dns_google.peer_addr().unwrap();
+        let reachability = SCNetworkReachability::from_addr_pair(local, remote);
+        let reachability_flags = reachability.reachability().unwrap();
+        assert!(reachability_flags.contains(ReachabilityFlags::REACHABLE));
     }
 
     #[test]

@@ -22,6 +22,7 @@ Line wrap the file at 100 chars.                                              Th
 
 
 ## [Unreleased]
+- Fix `std::net::SocketAddr` conversion to `libc::sockaddr`
 
 ## [0.6.0] - 2024-01-31
 ### Changed
