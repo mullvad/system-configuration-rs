@@ -16,6 +16,7 @@ FRAMEWORK_PATH="$SDK_PATH/System/Library/Frameworks/"
 PREFERENCES_HEADER_PATH="$FRAMEWORK_PATH/SystemConfiguration.framework/Headers/SCPreferences.h"
 DYNAMIC_STORE_HEADER_PATH="$FRAMEWORK_PATH/SystemConfiguration.framework/Headers/SCDynamicStore.h"
 DYNAMIC_STORE_COPY_SPECIFIC_HEADER_PATH="$FRAMEWORK_PATH/SystemConfiguration.framework/Headers/SCDynamicStoreCopySpecific.h"
+DYNAMIC_STORE_KEY_HEADER_PATH="$FRAMEWORK_PATH/SystemConfiguration.framework/Headers/SCDynamicStoreKey.h"
 NETWORK_CONFIGURATION_HEADER_PATH="$FRAMEWORK_PATH/SystemConfiguration.framework/Headers/SCNetworkConfiguration.h"
 NETWORK_REACHABILITY_HEADER_PATH="$FRAMEWORK_PATH/SystemConfiguration.framework/Headers/SCNetworkReachability.h"
 SCHEMA_DEFINITIONS_HEADER_PATH="$FRAMEWORK_PATH/SystemConfiguration.framework/Headers/SCSchemaDefinitions.h"
@@ -23,6 +24,7 @@ SCHEMA_DEFINITIONS_HEADER_PATH="$FRAMEWORK_PATH/SystemConfiguration.framework/He
 PREFERENCES_BINDING_PATH="./system-configuration-sys/src/preferences.rs"
 DYNAMIC_STORE_BINDING_PATH="./system-configuration-sys/src/dynamic_store.rs"
 DYNAMIC_STORE_COPY_SPECIFIC_BINDING_PATH="./system-configuration-sys/src/dynamic_store_copy_specific.rs"
+DYNAMIC_STORE_KEY_BINDING_PATH="./system-configuration-sys/src/dynamic_store_key.rs"
 NETWORK_CONFIGURATION_BINDING_PATH="./system-configuration-sys/src/network_configuration.rs"
 NETWORK_REACHABILITY_BINDING_PATH="./system-configuration-sys/src/network_reachability.rs"
 SCHEMA_DEFINITIONS_BINDING_PATH="./system-configuration-sys/src/schema_definitions.rs"
@@ -139,6 +141,24 @@ cleanup_binding $DYNAMIC_STORE_BINDING_PATH
 
 echo ""
 echo ""
+echo "Generating bindings for $DYNAMIC_STORE_KEY_HEADER_PATH"
+
+bindgen \
+    "${BINDGEN_COMMON_ARGUMENTS[@]}" \
+    --allowlist-function "SCDynamicStoreKeyCreate.*" \
+    --blocklist-type "(__)?CF.*" \
+    --blocklist-type "dispatch_queue_[ts]" \
+    --raw-line "use core_foundation_sys::base::CFAllocatorRef;" \
+    --raw-line "use core_foundation_sys::string::CFStringRef;" \
+    -o $DYNAMIC_STORE_KEY_BINDING_PATH \
+    $DYNAMIC_STORE_KEY_HEADER_PATH -- \
+    -I$SDK_PATH/usr/include \
+    -F$FRAMEWORK_PATH
+
+cleanup_binding $DYNAMIC_STORE_KEY_BINDING_PATH
+
+echo ""
+echo ""
 echo "Generating bindings for $DYNAMIC_STORE_COPY_SPECIFIC_HEADER_PATH"
 
 bindgen \
@@ -215,7 +235,7 @@ bindgen \
     --blocklist-type "Boolean" \
     --blocklist-type "dispatch_.*" \
     --blocklist-type "(sockaddr|socklen_t|sa_family_t|__darwin_socklen_t|__uint.*_t)" \
-    --raw-line '#![cfg_attr(feature = "cargo-clippy", allow(clippy::unreadable_literal))]' \
+    --raw-line '#![cfg_attr(feature = "clippy", allow(clippy::unreadable_literal))]' \
     --raw-line "use core_foundation_sys::base::{Boolean, CFAllocatorRef, CFTypeID, CFIndex};" \
     --raw-line "use core_foundation_sys::string::CFStringRef;" \
     --raw-line "use core_foundation_sys::runloop::CFRunLoopRef;" \
