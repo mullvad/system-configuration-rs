@@ -135,6 +135,12 @@ pub enum SCNetworkInterfaceType {
     IPv4,
 }
 
+/// Bridge interface type referred to as `kSCNetworkInterfaceTypeBridge` in private headers.
+static BRIDGE_INTERFACE_TYPE_ID: &str = "Bridge";
+
+/// IrDA interface referenced as `kSCNetworkInterfaceTypeIrDA` but deprecated since macOS 12.
+static IRDA_INTERFACE_TYPE_ID: &str = "IrDA";
+
 impl SCNetworkInterfaceType {
     /// Tries to construct a type by matching it to string constants used to identify a network
     /// interface type. If no constants match it, `None` is returned.

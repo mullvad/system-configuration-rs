@@ -85,6 +85,7 @@ bitflags::bitflags! {
     /// Rustier interface for [`SCNetworkReachabilityFlags`].
     ///
     /// [`SCNetworkReachability`]: https://developer.apple.com/documentation/systemconfiguration/scnetworkreachabilityflags
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
     pub struct ReachabilityFlags: u32 {
         /// The specified node name or address can be reached via a transient connection, such as
         /// PPP.
@@ -186,18 +187,21 @@ impl SCNetworkReachability {
     /// See [`SCNetworkReachabilityScheduleFromRunLoop`] for details.
     ///
     /// [`SCNetworkReachabilityScheduleFromRunLoop`]: https://developer.apple.com/documentation/systemconfiguration/1514894-scnetworkreachabilityschedulewit?language=objc
-    pub fn schedule_with_runloop(
+    ///
+    /// # Safety
+    ///
+    /// The `run_loop_mode` must not be NULL and must be a pointer to a valid run loop mode.
+    /// Use `core_foundation::runloop::kCFRunLoopCommonModes` if you are unsure.
+    pub unsafe fn schedule_with_runloop(
         &self,
         run_loop: &CFRunLoop,
         run_loop_mode: CFStringRef,
     ) -> Result<(), SchedulingError> {
-        if unsafe {
-            SCNetworkReachabilityScheduleWithRunLoop(
-                self.0,
-                run_loop.to_void() as *mut _,
-                run_loop_mode,
-            )
-        } == 0u8
+        if SCNetworkReachabilityScheduleWithRunLoop(
+            self.0,
+            run_loop.to_void() as *mut _,
+            run_loop_mode,
+        ) == 0u8
         {
             Err(SchedulingError(()))
         } else {
@@ -210,18 +214,21 @@ impl SCNetworkReachability {
     /// See [`SCNetworkReachabilityUnscheduleFromRunLoop`] for details.
     ///
     /// [`SCNetworkReachabilityUnscheduleFromRunLoop`]: https://developer.apple.com/documentation/systemconfiguration/1514899-scnetworkreachabilityunschedulef?language=objc
-    pub fn unschedule_from_runloop(
+    ///
+    /// # Safety
+    ///
+    /// The `run_loop_mode` must not be NULL and must be a pointer to a valid run loop mode.
+    /// Use `core_foundation::runloop::kCFRunLoopCommonModes` if you are unsure.
+    pub unsafe fn unschedule_from_runloop(
         &self,
         run_loop: &CFRunLoop,
         run_loop_mode: CFStringRef,
     ) -> Result<(), UnschedulingError> {
-        if unsafe {
-            SCNetworkReachabilityUnscheduleFromRunLoop(
-                self.0,
-                run_loop.to_void() as *mut _,
-                run_loop_mode,
-            )
-        } == 0u8
+        if SCNetworkReachabilityUnscheduleFromRunLoop(
+            self.0,
+            run_loop.to_void() as *mut _,
+            run_loop_mode,
+        ) == 0u8
         {
             Err(UnschedulingError(()))
         } else {
@@ -253,14 +260,26 @@ impl SCNetworkReachability {
             copyDescription: Some(NetworkReachabilityCallbackContext::<F>::copy_ctx_description),
         };
 
-        if unsafe {
+        let result = unsafe {
             SCNetworkReachabilitySetCallback(
                 self.0,
                 Some(NetworkReachabilityCallbackContext::<F>::callback),
                 &mut callback_context,
             )
-        } == 0u8
-        {
+        };
+
+        // The call to SCNetworkReachabilitySetCallback will call the
+        // `retain` callback which will increment the reference count on
+        // `callback`. Therefore, although the count is decremented below,
+        // the reference count will still be >0.
+        //
+        // When `SCNetworkReachability` is dropped, `release` is called
+        // which will drop the reference count on `callback` to 0.
+        //
+        // Assumes the pointer pointed to by the `info` member of `callback_context` is still valid.
+        unsafe { Arc::decrement_strong_count(callback_context.info) };
+
+        if result == 0u8 {
             Err(SetCallbackError {})
         } else {
             Ok(())
@@ -297,7 +316,7 @@ impl<T: Fn(ReachabilityFlags) + Sync + Send> NetworkReachabilityCallbackContext<
         context: *mut c_void,
     ) {
         let context: &mut Self = unsafe { &mut (*(context as *mut _)) };
-        (context.callback)(unsafe { ReachabilityFlags::from_bits_unchecked(flags) });
+        (context.callback)(ReachabilityFlags::from_bits_retain(flags));
     }
 
     extern "C" fn copy_ctx_description(_ctx: *const c_void) -> CFStringRef {
@@ -309,17 +328,15 @@ impl<T: Fn(ReachabilityFlags) + Sync + Send> NetworkReachabilityCallbackContext<
 
     extern "C" fn release_context(ctx: *const c_void) {
         unsafe {
-            let _ = Arc::from_raw(ctx as *mut Self);
+            Arc::decrement_strong_count(ctx as *mut Self);
         }
     }
 
     extern "C" fn retain_context(ctx_ptr: *const c_void) -> *const c_void {
         unsafe {
-            let ctx_ref: Arc<Self> = Arc::from_raw(ctx_ptr as *const Self);
-            let new_ctx = ctx_ref.clone();
-            std::mem::forget(ctx_ref);
-            Arc::into_raw(new_ctx) as *const c_void
+            Arc::increment_strong_count(ctx_ptr as *mut Self);
         }
+        ctx_ptr
     }
 }
 
@@ -373,14 +390,15 @@ mod test {
                 addr
             );
             reachability.set_callback(|_| {}).unwrap();
-            reachability
-                .schedule_with_runloop(&CFRunLoop::get_current(), unsafe { kCFRunLoopCommonModes })
-                .unwrap();
-            reachability
-                .unschedule_from_runloop(&CFRunLoop::get_current(), unsafe {
-                    kCFRunLoopCommonModes
-                })
-                .unwrap();
+            // SAFETY: We use the Apple provided run_loop_mode kCFRunLoopCommonModes
+            unsafe {
+                reachability
+                    .schedule_with_runloop(&CFRunLoop::get_current(), kCFRunLoopCommonModes)
+                    .unwrap();
+                reachability
+                    .unschedule_from_runloop(&CFRunLoop::get_current(), kCFRunLoopCommonModes)
+                    .unwrap();
+            }
         }
     }
 
@@ -404,14 +422,15 @@ mod test {
                 remote
             );
             reachability.set_callback(|_| {}).unwrap();
-            reachability
-                .schedule_with_runloop(&CFRunLoop::get_current(), unsafe { kCFRunLoopCommonModes })
-                .unwrap();
-            reachability
-                .unschedule_from_runloop(&CFRunLoop::get_current(), unsafe {
-                    kCFRunLoopCommonModes
-                })
-                .unwrap();
+            // SAFETY: We use the Apple provided run_loop_mode kCFRunLoopCommonModes
+            unsafe {
+                reachability
+                    .schedule_with_runloop(&CFRunLoop::get_current(), kCFRunLoopCommonModes)
+                    .unwrap();
+                reachability
+                    .unschedule_from_runloop(&CFRunLoop::get_current(), kCFRunLoopCommonModes)
+                    .unwrap();
+            }
         }
     }
 
@@ -425,16 +444,18 @@ mod test {
             match SCNetworkReachability::from_host(&input) {
                 Some(mut reachability) => {
                     reachability.set_callback(|_| {}).unwrap();
-                    reachability
-                        .schedule_with_runloop(&CFRunLoop::get_current(), unsafe {
-                            kCFRunLoopCommonModes
-                        })
-                        .unwrap();
-                    reachability
-                        .unschedule_from_runloop(&CFRunLoop::get_current(), unsafe {
-                            kCFRunLoopCommonModes
-                        })
-                        .unwrap();
+                    // SAFETY: We use the Apple provided run_loop_mode kCFRunLoopCommonModes
+                    unsafe {
+                        reachability
+                            .schedule_with_runloop(&CFRunLoop::get_current(), kCFRunLoopCommonModes)
+                            .unwrap();
+                        reachability
+                            .unschedule_from_runloop(
+                                &CFRunLoop::get_current(),
+                                kCFRunLoopCommonModes,
+                            )
+                            .unwrap();
+                    }
                 }
                 None => {
                     panic!(
@@ -461,9 +482,12 @@ mod test {
             let mut reachability =
                 SCNetworkReachability::from("0.0.0.0:0".parse::<SocketAddr>().unwrap());
             reachability.set_callback(|_| {}).unwrap();
-            reachability
-                .schedule_with_runloop(&CFRunLoop::get_current(), unsafe { kCFRunLoopCommonModes })
-                .unwrap();
+            // SAFETY: We use the Apple provided run_loop_mode kCFRunLoopCommonModes
+            unsafe {
+                reachability
+                    .schedule_with_runloop(&CFRunLoop::get_current(), kCFRunLoopCommonModes)
+                    .unwrap();
+            }
             reachability.set_callback(|_| {}).unwrap();
             let _ = tx.send(reachability);
             CFRunLoop::run_current();
