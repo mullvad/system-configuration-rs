@@ -22,7 +22,12 @@ Line wrap the file at 100 chars.                                              Th
 
 
 ## [Unreleased]
-- Fix `std::net::SocketAddr` conversion to `libc::sockaddr`
+
+## [0.6.1] - 2024-08-22
+### Fixed
+- Fix `std::net::SocketAddr` conversion to `libc::sockaddr`. This makes `SCNetworkReachability`
+  reachability check work for other addresses than only `0.0.0.0:0`.
+
 
 ## [0.6.0] - 2024-01-31
 ### Changed
