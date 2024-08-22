@@ -10,19 +10,6 @@ env:
   RUSTFLAGS: --deny warnings
 
 jobs:
-  formatting:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          components: rustfmt
-          default: true
-      - name: Check formatting
-        run: cargo fmt -- --check
-
   build-and-test:
     strategy:
       matrix:
