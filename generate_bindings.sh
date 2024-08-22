@@ -215,7 +215,7 @@ bindgen \
     --blocklist-type "Boolean" \
     --blocklist-type "dispatch_.*" \
     --blocklist-type "(sockaddr|socklen_t|sa_family_t|__darwin_socklen_t|__uint.*_t)" \
-    --raw-line '#![cfg_attr(feature = "cargo-clippy", allow(clippy::unreadable_literal))]' \
+    --raw-line '#![allow(clippy::unreadable_literal)]' \
     --raw-line "use core_foundation_sys::base::{Boolean, CFAllocatorRef, CFTypeID, CFIndex};" \
     --raw-line "use core_foundation_sys::string::CFStringRef;" \
     --raw-line "use core_foundation_sys::runloop::CFRunLoopRef;" \
