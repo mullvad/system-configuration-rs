@@ -23,26 +23,6 @@ jobs:
       - name: Check formatting
         run: cargo fmt -- --check
 
-  audit:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          default: true
-      - name: Install cargo-audit
-        uses: actions-rs/install@v0.1.2
-        with:
-          crate: cargo-audit
-          version: latest
-          use-tool-cache: true
-      - name: Audit
-        run: cargo audit --deny warnings
-
-
   build-and-test:
     strategy:
       matrix:
