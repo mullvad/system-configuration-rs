@@ -23,6 +23,9 @@ Line wrap the file at 100 chars.                                              Th
 
 ## [Unreleased]
 
+### Added
+- Added `std::error::Error` implementation for `ReachabilityError`.
+
 ## [0.6.1] - 2024-08-22
 ### Fixed
 - Fix `std::net::SocketAddr` conversion to `libc::sockaddr`. This makes `SCNetworkReachability`
