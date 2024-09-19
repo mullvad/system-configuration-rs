@@ -102,7 +102,7 @@ impl<T> SCDynamicStoreBuilder<T> {
     }
 
     /// Create the dynamic store session.
-    pub fn build(mut self) -> SCDynamicStore {
+    pub fn build(mut self) -> Option<SCDynamicStore> {
         let store_options = self.create_store_options();
         if let Some(callback_context) = self.callback_context.take() {
             SCDynamicStore::create(
@@ -161,7 +161,7 @@ impl SCDynamicStore {
         store_options: &CFDictionary,
         callout: SCDynamicStoreCallBack,
         context: *mut SCDynamicStoreContext,
-    ) -> Self {
+    ) -> Option<Self> {
         unsafe {
             let store = SCDynamicStoreCreateWithOptions(
                 kCFAllocatorDefault,
@@ -170,7 +170,11 @@ impl SCDynamicStore {
                 callout,
                 context,
             );
-            SCDynamicStore::wrap_under_create_rule(store)
+            if store.is_null() {
+                None
+            } else {
+                Some(SCDynamicStore::wrap_under_create_rule(store))
+            }
         }
     }
 
@@ -185,10 +189,10 @@ impl SCDynamicStore {
                 self.as_concrete_TypeRef(),
                 cf_pattern.as_concrete_TypeRef(),
             );
-            if !array_ref.is_null() {
-                Some(CFArray::wrap_under_create_rule(array_ref))
-            } else {
+            if array_ref.is_null() {
                 None
+            } else {
+                Some(CFArray::wrap_under_create_rule(array_ref))
             }
         }
     }
@@ -268,14 +272,18 @@ impl SCDynamicStore {
     }
 
     /// Creates a run loop source object that can be added to the application's run loop.
-    pub fn create_run_loop_source(&self) -> CFRunLoopSource {
+    pub fn create_run_loop_source(&self) -> Option<CFRunLoopSource> {
         unsafe {
             let run_loop_source_ref = SCDynamicStoreCreateRunLoopSource(
                 kCFAllocatorDefault,
                 self.as_concrete_TypeRef(),
                 0,
             );
-            CFRunLoopSource::wrap_under_create_rule(run_loop_source_ref)
+            if run_loop_source_ref.is_null() {
+                None
+            } else {
+                Some(CFRunLoopSource::wrap_under_create_rule(run_loop_source_ref))
+            }
         }
     }
 }
