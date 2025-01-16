@@ -16,16 +16,20 @@
 //!
 //! [SystemConfiguration]: https://developer.apple.com/documentation/systemconfiguration?language=objc
 //! [`system-configuration-sys`]: https://crates.io/crates/system-configuration-sys
-
 #![deny(missing_docs)]
-
 /// CoreFoundation wrappers
 #[macro_use]
+#[cfg(target_os = "macos")]
 pub extern crate core_foundation;
 /// Low-level SystemConfiguration bindings
+#[cfg(target_os = "macos")]
 pub extern crate system_configuration_sys as sys;
 
+#[cfg(target_os = "macos")]
 pub mod dynamic_store;
+#[cfg(target_os = "macos")]
 pub mod network_configuration;
+#[cfg(target_os = "macos")]
 pub mod network_reachability;
+#[cfg(target_os = "macos")]
 pub mod preferences;
