@@ -9,24 +9,30 @@ SED=$(which gsed)
 
 export DYLD_LIBRARY_PATH=$(rustc +stable --print sysroot)/lib
 
+# ---------------- MacOS SDK ----------------
 SDK_VERSION=`xcodebuild -sdk macosx -version SDKVersion`
 SDK_PATH=`xcodebuild -sdk macosx -version Path`
-FRAMEWORK_PATH="$SDK_PATH/System/Library/Frameworks/"
+FRAMEWORK_PATH="${SDK_PATH}/System/Library/Frameworks/"
 
-PREFERENCES_HEADER_PATH="$FRAMEWORK_PATH/SystemConfiguration.framework/Headers/SCPreferences.h"
-DYNAMIC_STORE_HEADER_PATH="$FRAMEWORK_PATH/SystemConfiguration.framework/Headers/SCDynamicStore.h"
-DYNAMIC_STORE_COPY_SPECIFIC_HEADER_PATH="$FRAMEWORK_PATH/SystemConfiguration.framework/Headers/SCDynamicStoreCopySpecific.h"
-NETWORK_CONFIGURATION_HEADER_PATH="$FRAMEWORK_PATH/SystemConfiguration.framework/Headers/SCNetworkConfiguration.h"
-NETWORK_REACHABILITY_HEADER_PATH="$FRAMEWORK_PATH/SystemConfiguration.framework/Headers/SCNetworkReachability.h"
-SCHEMA_DEFINITIONS_HEADER_PATH="$FRAMEWORK_PATH/SystemConfiguration.framework/Headers/SCSchemaDefinitions.h"
+# ---------------- SystemConfiguration framework headers ----------------
+SC_HEADER_PATH="${FRAMEWORK_PATH}/SystemConfiguration.framework/Headers/"
+PREFERENCES_HEADER_PATH="${SC_HEADER_PATH}/SCPreferences.h"
+DYNAMIC_STORE_HEADER_PATH="${SC_HEADER_PATH}/SCDynamicStore.h"
+DYNAMIC_STORE_COPY_SPECIFIC_HEADER_PATH="${SC_HEADER_PATH}/SCDynamicStoreCopySpecific.h"
+NETWORK_CONFIGURATION_HEADER_PATH="${SC_HEADER_PATH}/SCNetworkConfiguration.h"
+NETWORK_REACHABILITY_HEADER_PATH="${SC_HEADER_PATH}/SCNetworkReachability.h"
+SCHEMA_DEFINITIONS_HEADER_PATH="${SC_HEADER_PATH}/SCSchemaDefinitions.h"
 
-PREFERENCES_BINDING_PATH="./system-configuration-sys/src/preferences.rs"
-DYNAMIC_STORE_BINDING_PATH="./system-configuration-sys/src/dynamic_store.rs"
-DYNAMIC_STORE_COPY_SPECIFIC_BINDING_PATH="./system-configuration-sys/src/dynamic_store_copy_specific.rs"
-NETWORK_CONFIGURATION_BINDING_PATH="./system-configuration-sys/src/network_configuration.rs"
-NETWORK_REACHABILITY_BINDING_PATH="./system-configuration-sys/src/network_reachability.rs"
-SCHEMA_DEFINITIONS_BINDING_PATH="./system-configuration-sys/src/schema_definitions.rs"
+# ---------------- SystemConfiguration framework bindings ----------------
+SC_BINDING_PATH="./system-configuration-sys/src/"
+PREFERENCES_BINDING_PATH="${SC_BINDING_PATH}/preferences.rs"
+DYNAMIC_STORE_BINDING_PATH="${SC_BINDING_PATH}/dynamic_store.rs"
+DYNAMIC_STORE_COPY_SPECIFIC_BINDING_PATH="${SC_BINDING_PATH}/dynamic_store_copy_specific.rs"
+NETWORK_CONFIGURATION_BINDING_PATH="${SC_BINDING_PATH}/network_configuration.rs"
+NETWORK_REACHABILITY_BINDING_PATH="${SC_BINDING_PATH}/network_reachability.rs"
+SCHEMA_DEFINITIONS_BINDING_PATH="${SC_BINDING_PATH}/schema_definitions.rs"
 
+# ---------------- Bindgen-related definitions ----------------
 BINDGEN_VERSION=`bindgen --version`
 
 echo "Using macOS SDK at: $SDK_PATH"
@@ -83,6 +89,7 @@ BINDGEN_COMMON_ARGUMENTS=(
     --raw-line ""
 )
 
+# ---------------- Bindgen code-generation ----------------
 echo "Generating bindings for $PREFERENCES_HEADER_PATH"
 bindgen \
     "${BINDGEN_COMMON_ARGUMENTS[@]}" \
