@@ -17,22 +17,6 @@ FRAMEWORK_PATH="${SDK_PATH}/System/Library/Frameworks/"
 # ---------------- SystemConfiguration framework headers ----------------
 SC_HEADER_PATH="${FRAMEWORK_PATH}/SystemConfiguration.framework/Headers/"
 
-CaptiveNetwork
-DHCPClientPreferences
-SCDynamicStore
-SCDynamicStoreCopyDHCPInfo
-SCDynamicStoreCopySpecific
-SCDynamicStoreKey
-SCNetwork
-SCNetworkConfiguration
-SCNetworkConnection
-SCNetworkReachability
-SCPreferences
-SCPreferencesPath
-SCPreferencesSetSpecific
-SCSchemaDefinitions
-SystemConfiguration
-
 PREFERENCES_HEADER_PATH="${SC_HEADER_PATH}/SCPreferences.h"
 DYNAMIC_STORE_HEADER_PATH="${SC_HEADER_PATH}/SCDynamicStore.h"
 DYNAMIC_STORE_COPY_SPECIFIC_HEADER_PATH="${SC_HEADER_PATH}/SCDynamicStoreCopySpecific.h"
@@ -44,22 +28,6 @@ SCHEMA_DEFINITIONS_HEADER_PATH="${SC_HEADER_PATH}/SCSchemaDefinitions.h"
 
 # ---------------- SystemConfiguration framework bindings ----------------
 SC_BINDING_PATH="./system-configuration-sys/src/"
-
-CaptiveNetwork
-DHCPClientPreferences
-SCDynamicStore
-SCDynamicStoreCopyDHCPInfo
-SCDynamicStoreCopySpecific
-SCDynamicStoreKey
-SCNetwork
-SCNetworkConfiguration
-SCNetworkConnection
-SCNetworkReachability
-SCPreferences
-SCPreferencesPath
-SCPreferencesSetSpecific
-SCSchemaDefinitions
-SystemConfiguration
 
 PREFERENCES_BINDING_PATH="${SC_BINDING_PATH}/preferences.rs"
 DYNAMIC_STORE_BINDING_PATH="${SC_BINDING_PATH}/dynamic_store.rs"
