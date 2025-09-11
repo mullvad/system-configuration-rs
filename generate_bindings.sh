@@ -288,8 +288,6 @@ bindgen \
     "${BINDGEN_COMMON_ARGUMENTS[@]}" \
     --allowlist-var "k(CFErrorDomainSystemConfiguration|SCStatus.*)" \
     --allowlist-function "SC(CopyLastError|Error|ErrorString)" \
-    --blocklist-type "(__)?CF.*" \
-    --blocklist-type "dispatch_queue_[ts]" \
     --raw-line "use core_foundation_sys::error::CFErrorRef;" \
     --raw-line "use core_foundation_sys::string::CFStringRef;" \
     --raw-line "" \
