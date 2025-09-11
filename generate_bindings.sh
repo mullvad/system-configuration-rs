@@ -286,7 +286,8 @@ echo ""
 echo "Generating bindings for $SYSTEM_CONFIGURATION_HEADER_PATH"
 bindgen \
     "${BINDGEN_COMMON_ARGUMENTS[@]}" \
-    --allowlist-var "kSC.*" \
+    --allowlist-var "k(CFErrorDomainSystemConfiguration|SCStatus.*)" \
+    --allowlist-function "SC(CopyLastError|Error|ErrorString)" \
     --blocklist-type "(__)?CF.*" \
     --blocklist-type "dispatch_queue_[ts]" \
     --raw-line "use core_foundation_sys::string::CFStringRef;" \
