@@ -16,7 +16,6 @@ FRAMEWORK_PATH="${SDK_PATH}/System/Library/Frameworks/"
 
 # ---------------- SystemConfiguration framework headers ----------------
 SC_HEADER_PATH="${FRAMEWORK_PATH}/SystemConfiguration.framework/Headers/"
-
 #CAPTIVE_NETWORK_HEADER_PATH="${SC_HEADER_PATH}/CaptiveNetwork.h"
 #DHCP_CLIENT_PREFERENCES_HEADER_PATH="${SC_HEADER_PATH}/DHCPClientPreferences.h"
 DYNAMIC_STORE_HEADER_PATH="${SC_HEADER_PATH}/SCDynamicStore.h"
@@ -35,7 +34,6 @@ SCHEMA_DEFINITIONS_HEADER_PATH="${SC_HEADER_PATH}/SCSchemaDefinitions.h"
 
 # ---------------- SystemConfiguration framework bindings ----------------
 SC_BINDING_PATH="./system-configuration-sys/src/"
-
 #CAPTIVE_NETWORK_BINDING_PATH="${SC_BINDING_PATH}/captive_network.rs"
 #DHCP_CLIENT_PREFERENCES_BINDING_PATH="${SC_BINDING_PATH}/dhcp_client_preferences.rs"
 DYNAMIC_STORE_BINDING_PATH="${SC_BINDING_PATH}/dynamic_store.rs"
@@ -109,7 +107,7 @@ BINDGEN_COMMON_ARGUMENTS=(
     --raw-line ""
 )
 
-# ---------------- Bindgen code-generation ----------------
+# ---------------- Bindgen: SCPreferences.h => preferences.rs ----------------
 echo "Generating bindings for $PREFERENCES_HEADER_PATH"
 bindgen \
     "${BINDGEN_COMMON_ARGUMENTS[@]}" \
@@ -139,8 +137,9 @@ cleanup_binding $PREFERENCES_BINDING_PATH
 
 echo ""
 echo ""
-echo "Generating bindings for $DYNAMIC_STORE_HEADER_PATH"
 
+# ---------------- Bindgen: SCDynamicStore.h => dynamic_store.rs ----------------
+echo "Generating bindings for $DYNAMIC_STORE_HEADER_PATH"
 bindgen \
     "${BINDGEN_COMMON_ARGUMENTS[@]}" \
     --allowlist-function "SCDynamicStore.*" \
@@ -166,8 +165,9 @@ cleanup_binding $DYNAMIC_STORE_BINDING_PATH
 
 echo ""
 echo ""
-echo "Generating bindings for $DYNAMIC_STORE_COPY_SPECIFIC_HEADER_PATH"
 
+# ---------------- Bindgen: SCDynamicStoreCopySpecific.h => dynamic_store_copy_specific.rs ----------------
+echo "Generating bindings for $DYNAMIC_STORE_COPY_SPECIFIC_HEADER_PATH"
 bindgen \
     "${BINDGEN_COMMON_ARGUMENTS[@]}" \
     --allowlist-function "SCDynamicStoreCopy(ComputerName|ConsoleUser|LocalHostName|Location|Proxies)" \
@@ -187,8 +187,9 @@ cleanup_binding $DYNAMIC_STORE_COPY_SPECIFIC_BINDING_PATH
 
 echo ""
 echo ""
-echo "Generating bindings for $NETWORK_CONFIGURATION_HEADER_PATH"
 
+# ---------------- Bindgen: SCNetworkConfiguration.h => network_configuration.rs ----------------
+echo "Generating bindings for $NETWORK_CONFIGURATION_HEADER_PATH"
 bindgen \
     "${BINDGEN_COMMON_ARGUMENTS[@]}" \
     --allowlist-function "SCNetwork.*" \
@@ -228,8 +229,9 @@ cleanup_binding $NETWORK_CONFIGURATION_BINDING_PATH
 
 echo ""
 echo ""
-echo "Generating bindings for $NETWORK_REACHABILITY_HEADER_PATH"
 
+# ---------------- Bindgen: SCNetworkReachability.h => network_reachability.rs ----------------
+echo "Generating bindings for $NETWORK_REACHABILITY_HEADER_PATH"
 bindgen \
     "${BINDGEN_COMMON_ARGUMENTS[@]}" \
     --allowlist-function "SCNetworkReachability.*" \
@@ -256,11 +258,11 @@ bindgen \
 
 cleanup_binding $NETWORK_REACHABILITY_BINDING_PATH
 
+echo ""
+echo ""
 
-echo ""
-echo ""
+# ---------------- Bindgen: SCSchemaDefinitions.h => schema_definitions.rs ----------------
 echo "Generating bindings for $SCHEMA_DEFINITIONS_HEADER_PATH"
-
 bindgen \
     "${BINDGEN_COMMON_ARGUMENTS[@]}" \
     --allowlist-var "kSC.*" \
