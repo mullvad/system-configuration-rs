@@ -40,35 +40,6 @@ def binding_path_line(i: Item) -> str:
     return i["binding_path_var"] + "=\"${SC_BINDING_PATH}/" + i["binding_name"] + "\""
 
 
-def bindgen_big_item(i: Item) -> str:
-    return fr"""echo "Generating bindings for ${i['header_path_var']}"
-bindgen \
-    "${{BINDGEN_COMMON_ARGUMENTS[@]}}" \
-    --allowlist-function "SCPreferences.*" \
-    --blocklist-type "(__)?CF.*" \
-    --blocklist-type "Boolean" \
-    --blocklist-type "dispatch_queue_[ts]" \
-    --blocklist-type "(AuthorizationOpaqueRef|__SCPreferences)" \
-    --raw-line "use core::ffi::c_void;" \
-    --raw-line "use core_foundation_sys::array::CFArrayRef;" \
-    --raw-line "use core_foundation_sys::base::{{Boolean, CFIndex, CFAllocatorRef, CFTypeID}};" \
-    --raw-line "use core_foundation_sys::data::CFDataRef;" \
-    --raw-line "use core_foundation_sys::string::CFStringRef;" \
-    --raw-line "use core_foundation_sys::propertylist::CFPropertyListRef;" \
-    --raw-line "use core_foundation_sys::runloop::CFRunLoopRef;" \
-    --raw-line "" \
-    --raw-line "use crate::dispatch_queue_t;" \
-    --raw-line "" \
-    --raw-line "pub type AuthorizationOpaqueRef = c_void;" \
-    --raw-line "pub type __SCPreferences = c_void;" \
-    -o ${i['binding_path_var']} \
-    ${i['header_path_var']} -- \
-    -I$SDK_PATH/usr/include \
-    -F$FRAMEWORK_PATH
-
-cleanup_binding ${i['binding_path_var']}"""
-
-
 def header_path_block(ix: List[Item]) -> str:
     return "\n".join([i["header_path_line"] for i in ix])
 
@@ -120,17 +91,3 @@ print(header_path_block(items), "\n")
 
 print("### binding_path_block".upper())
 print(binding_path_block(items), "\n")
-
-print("### bindgens_block".upper())
-sep = """
-echo ""
-echo """""
-items = [
-    grab(items, "SCPreferences"),
-    grab(items, "SCDynamicStore"),
-    grab(items, "SCDynamicStoreCopySpecific"),
-    grab(items, "SCNetworkConfiguration"),
-    grab(items, "SCNetworkReachability"),
-    grab(items, "SCSchemaDefinitions"),
-]
-print(sep.join([bindgen_big_item(i) for i in items]))
