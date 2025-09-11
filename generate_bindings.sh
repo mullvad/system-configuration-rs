@@ -16,6 +16,7 @@ FRAMEWORK_PATH="${SDK_PATH}/System/Library/Frameworks/"
 
 # ---------------- SystemConfiguration framework headers ----------------
 SC_HEADER_PATH="${FRAMEWORK_PATH}/SystemConfiguration.framework/Headers/"
+
 #CAPTIVE_NETWORK_HEADER_PATH="${SC_HEADER_PATH}/CaptiveNetwork.h"
 #DHCP_CLIENT_PREFERENCES_HEADER_PATH="${SC_HEADER_PATH}/DHCPClientPreferences.h"
 DYNAMIC_STORE_HEADER_PATH="${SC_HEADER_PATH}/SCDynamicStore.h"
@@ -34,6 +35,7 @@ SCHEMA_DEFINITIONS_HEADER_PATH="${SC_HEADER_PATH}/SCSchemaDefinitions.h"
 
 # ---------------- SystemConfiguration framework bindings ----------------
 SC_BINDING_PATH="./system-configuration-sys/src/"
+
 #CAPTIVE_NETWORK_BINDING_PATH="${SC_BINDING_PATH}/captive_network.rs"
 #DHCP_CLIENT_PREFERENCES_BINDING_PATH="${SC_BINDING_PATH}/dhcp_client_preferences.rs"
 DYNAMIC_STORE_BINDING_PATH="${SC_BINDING_PATH}/dynamic_store.rs"
@@ -106,37 +108,6 @@ BINDGEN_COMMON_ARGUMENTS=(
     --raw-line "// macOS SDK $SDK_VERSION."
     --raw-line ""
 )
-
-# ---------------- Bindgen: SCPreferences.h => preferences.rs ----------------
-echo "Generating bindings for $PREFERENCES_HEADER_PATH"
-bindgen \
-    "${BINDGEN_COMMON_ARGUMENTS[@]}" \
-    --allowlist-function "SCPreferences.*" \
-    --blocklist-type "(__)?CF.*" \
-    --blocklist-type "Boolean" \
-    --blocklist-type "dispatch_queue_[ts]" \
-    --blocklist-type "(AuthorizationOpaqueRef|__SCPreferences)" \
-    --raw-line "use core::ffi::c_void;" \
-    --raw-line "use core_foundation_sys::array::CFArrayRef;" \
-    --raw-line "use core_foundation_sys::base::{Boolean, CFIndex, CFAllocatorRef, CFTypeID};" \
-    --raw-line "use core_foundation_sys::data::CFDataRef;" \
-    --raw-line "use core_foundation_sys::string::CFStringRef;" \
-    --raw-line "use core_foundation_sys::propertylist::CFPropertyListRef;" \
-    --raw-line "use core_foundation_sys::runloop::CFRunLoopRef;" \
-    --raw-line "" \
-    --raw-line "use crate::dispatch_queue_t;" \
-    --raw-line "" \
-    --raw-line "pub type AuthorizationOpaqueRef = c_void;" \
-    --raw-line "pub type __SCPreferences = c_void;" \
-    -o $PREFERENCES_BINDING_PATH \
-    $PREFERENCES_HEADER_PATH -- \
-    -I$SDK_PATH/usr/include \
-    -F$FRAMEWORK_PATH
-
-cleanup_binding $PREFERENCES_BINDING_PATH
-
-echo ""
-echo ""
 
 # ---------------- Bindgen: SCDynamicStore.h => dynamic_store.rs ----------------
 echo "Generating bindings for $DYNAMIC_STORE_HEADER_PATH"
@@ -257,6 +228,37 @@ bindgen \
     -F$FRAMEWORK_PATH
 
 cleanup_binding $NETWORK_REACHABILITY_BINDING_PATH
+
+echo ""
+echo ""
+
+# ---------------- Bindgen: SCPreferences.h => preferences.rs ----------------
+echo "Generating bindings for $PREFERENCES_HEADER_PATH"
+bindgen \
+    "${BINDGEN_COMMON_ARGUMENTS[@]}" \
+    --allowlist-function "SCPreferences.*" \
+    --blocklist-type "(__)?CF.*" \
+    --blocklist-type "Boolean" \
+    --blocklist-type "dispatch_queue_[ts]" \
+    --blocklist-type "(AuthorizationOpaqueRef|__SCPreferences)" \
+    --raw-line "use core::ffi::c_void;" \
+    --raw-line "use core_foundation_sys::array::CFArrayRef;" \
+    --raw-line "use core_foundation_sys::base::{Boolean, CFIndex, CFAllocatorRef, CFTypeID};" \
+    --raw-line "use core_foundation_sys::data::CFDataRef;" \
+    --raw-line "use core_foundation_sys::string::CFStringRef;" \
+    --raw-line "use core_foundation_sys::propertylist::CFPropertyListRef;" \
+    --raw-line "use core_foundation_sys::runloop::CFRunLoopRef;" \
+    --raw-line "" \
+    --raw-line "use crate::dispatch_queue_t;" \
+    --raw-line "" \
+    --raw-line "pub type AuthorizationOpaqueRef = c_void;" \
+    --raw-line "pub type __SCPreferences = c_void;" \
+    -o $PREFERENCES_BINDING_PATH \
+    $PREFERENCES_HEADER_PATH -- \
+    -I$SDK_PATH/usr/include \
+    -F$FRAMEWORK_PATH
+
+cleanup_binding $PREFERENCES_BINDING_PATH
 
 echo ""
 echo ""
