@@ -31,7 +31,7 @@ PREFERENCES_HEADER_PATH="${SC_HEADER_PATH}/SCPreferences.h"
 #PREFERENCES_PATH_HEADER_PATH="${SC_HEADER_PATH}/SCPreferencesPath.h"
 #PREFERENCES_SET_SPECIFIC_HEADER_PATH="${SC_HEADER_PATH}/SCPreferencesSetSpecific.h"
 SCHEMA_DEFINITIONS_HEADER_PATH="${SC_HEADER_PATH}/SCSchemaDefinitions.h"
-#SYSTEM_CONFIGURATION_HEADER_PATH="${SC_HEADER_PATH}/SystemConfiguration.h"
+SYSTEM_CONFIGURATION_HEADER_PATH="${SC_HEADER_PATH}/SystemConfiguration.h"
 
 # ---------------- SystemConfiguration framework bindings ----------------
 SC_BINDING_PATH="./system-configuration-sys/src/"
@@ -50,7 +50,7 @@ PREFERENCES_BINDING_PATH="${SC_BINDING_PATH}/preferences.rs"
 #PREFERENCES_PATH_BINDING_PATH="${SC_BINDING_PATH}/preferences_path.rs"
 #PREFERENCES_SET_SPECIFIC_BINDING_PATH="${SC_BINDING_PATH}/preferences_set_specific.rs"
 SCHEMA_DEFINITIONS_BINDING_PATH="${SC_BINDING_PATH}/schema_definitions.rs"
-#SYSTEM_CONFIGURATION_BINDING_PATH="${SC_BINDING_PATH}/system_configuration.rs"
+SYSTEM_CONFIGURATION_BINDING_PATH="${SC_BINDING_PATH}/system_configuration.rs"
 
 # ---------------- Bindgen-related definitions ----------------
 BINDGEN_VERSION=`bindgen --version`
@@ -278,3 +278,23 @@ bindgen \
     -F$FRAMEWORK_PATH
 
 cleanup_binding $SCHEMA_DEFINITIONS_BINDING_PATH
+
+echo ""
+echo ""
+
+# ---------------- Bindgen: SystemConfiguration.h => system_configuration.rs ----------------
+echo "Generating bindings for $SYSTEM_CONFIGURATION_HEADER_PATH"
+bindgen \
+    "${BINDGEN_COMMON_ARGUMENTS[@]}" \
+    --allowlist-var "kSC.*" \
+    --blocklist-type "(__)?CF.*" \
+    --blocklist-type "dispatch_queue_[ts]" \
+    --raw-line "use core_foundation_sys::string::CFStringRef;" \
+    --raw-line "" \
+    -o $SYSTEM_CONFIGURATION_BINDING_PATH \
+    $SYSTEM_CONFIGURATION_HEADER_PATH -- \
+    -I$SDK_PATH/usr/include \
+    -F$FRAMEWORK_PATH
+
+cleanup_binding $SYSTEM_CONFIGURATION_BINDING_PATH
+
