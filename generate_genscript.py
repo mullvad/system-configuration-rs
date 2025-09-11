@@ -9,15 +9,15 @@ from typing import List, TypedDict
 
 
 # ---- type & func defs ----
-def tosnk(s: str):
+def to_snake_case(s: str):
     nound_pat = re.compile(r"(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])")
     s = nound_pat.sub('_', s).lower()
     return s
 
 
 class Item(TypedDict):
-    pure_cc: str
-    pure_sc: str
+    pure_camel_case: str
+    pure_snake_case: str
 
     header_name: str
     header_path_var: str
@@ -65,7 +65,7 @@ items = [Item(pure_cc=s, pure_sc="", header_name=s + ".h", header_path_var="",
 
 # generate pure sc + binding name -> container
 items = [Item(i, pure_sc=i["pure_cc"].replace("SC", "")) for i in items]
-items = [Item(i, pure_sc=tosnk(i["pure_sc"])) for i in items]
+items = [Item(i, pure_sc=to_snake_case(i["pure_sc"])) for i in items]
 items = [Item(i, binding_name=i["pure_sc"] + ".rs") for i in items]
 
 # genrate path vars
