@@ -122,4 +122,15 @@ print("### binding_path_block".upper())
 print(binding_path_block(items), "\n")
 
 print("### bindgens_block".upper())
-print(bindgen_big_item(grab(items, "SCPreferences")))
+sep = """
+echo ""
+echo """""
+items = [
+    grab(items, "SCPreferences"),
+    grab(items, "SCDynamicStore"),
+    grab(items, "SCDynamicStoreCopySpecific"),
+    grab(items, "SCNetworkConfiguration"),
+    grab(items, "SCNetworkReachability"),
+    grab(items, "SCSchemaDefinitions"),
+]
+print(sep.join([bindgen_big_item(i) for i in items]))
