@@ -28,7 +28,7 @@ NETWORK_CONFIGURATION_HEADER_PATH="${SC_HEADER_PATH}/SCNetworkConfiguration.h"
 #NETWORK_CONNECTION_HEADER_PATH="${SC_HEADER_PATH}/SCNetworkConnection.h"
 NETWORK_REACHABILITY_HEADER_PATH="${SC_HEADER_PATH}/SCNetworkReachability.h"
 PREFERENCES_HEADER_PATH="${SC_HEADER_PATH}/SCPreferences.h"
-#PREFERENCES_PATH_HEADER_PATH="${SC_HEADER_PATH}/SCPreferencesPath.h"
+PREFERENCES_PATH_HEADER_PATH="${SC_HEADER_PATH}/SCPreferencesPath.h"
 #PREFERENCES_SET_SPECIFIC_HEADER_PATH="${SC_HEADER_PATH}/SCPreferencesSetSpecific.h"
 SCHEMA_DEFINITIONS_HEADER_PATH="${SC_HEADER_PATH}/SCSchemaDefinitions.h"
 SYSTEM_CONFIGURATION_HEADER_PATH="${SC_HEADER_PATH}/SystemConfiguration.h"
@@ -47,7 +47,7 @@ NETWORK_CONFIGURATION_BINDING_PATH="${SC_BINDING_PATH}/network_configuration.rs"
 #NETWORK_CONNECTION_BINDING_PATH="${SC_BINDING_PATH}/network_connection.rs"
 NETWORK_REACHABILITY_BINDING_PATH="${SC_BINDING_PATH}/network_reachability.rs"
 PREFERENCES_BINDING_PATH="${SC_BINDING_PATH}/preferences.rs"
-#PREFERENCES_PATH_BINDING_PATH="${SC_BINDING_PATH}/preferences_path.rs"
+PREFERENCES_PATH_BINDING_PATH="${SC_BINDING_PATH}/preferences_path.rs"
 #PREFERENCES_SET_SPECIFIC_BINDING_PATH="${SC_BINDING_PATH}/preferences_set_specific.rs"
 SCHEMA_DEFINITIONS_BINDING_PATH="${SC_BINDING_PATH}/schema_definitions.rs"
 SYSTEM_CONFIGURATION_BINDING_PATH="${SC_BINDING_PATH}/system_configuration.rs"
@@ -262,6 +262,36 @@ cleanup_binding $PREFERENCES_BINDING_PATH
 
 echo ""
 echo ""
+
+# ---------------- Bindgen: SCPreferencesPath.h => preferences_path.rs ----------------
+echo "Generating bindings for $PREFERENCES_PATH_HEADER_PATH"
+bindgen \
+    "${BINDGEN_COMMON_ARGUMENTS[@]}" \
+    --allowlist-function "SCPreferencesPath.*" \
+    --blocklist-type "(__)?CF.*" \
+    --blocklist-type "Boolean" \
+    --blocklist-type "(__SCPreferences|SCPreferencesRef)" \
+    --raw-line "use core_foundation_sys::dictionary::CFDictionaryRef;" \
+    --raw-line "use core_foundation_sys::base::Boolean;" \
+    --raw-line "use core_foundation_sys::string::CFStringRef;" \
+    --raw-line "" \
+    --raw-line "use crate::preferences::SCPreferencesRef;" \
+    -o $PREFERENCES_PATH_BINDING_PATH \
+    $PREFERENCES_PATH_HEADER_PATH -- \
+    -I$SDK_PATH/usr/include \
+    -F$FRAMEWORK_PATH
+
+cleanup_binding $PREFERENCES_PATH_BINDING_PATH
+
+echo ""
+echo ""
+
+#    --allowlist-function "SCPreferences.*" \
+#    --blocklist-type "(__)?CF.*" \
+#    --blocklist-type "Boolean" \
+#    --blocklist-type "dispatch_queue_[ts]" \
+#    --blocklist-type "(AuthorizationOpaqueRef|__SCPreferences)" \
+
 
 # ---------------- Bindgen: SCSchemaDefinitions.h => schema_definitions.rs ----------------
 echo "Generating bindings for $SCHEMA_DEFINITIONS_HEADER_PATH"

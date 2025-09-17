@@ -13,9 +13,12 @@
 //! [`SCPreferences`]: https://developer.apple.com/documentation/systemconfiguration/scpreferences-ft8
 
 use crate::sys::preferences::{SCPreferencesCreate, SCPreferencesGetTypeID, SCPreferencesRef};
+use core_foundation::array::CFArray;
 use core_foundation::base::{CFAllocator, TCFType};
+use core_foundation::propertylist::CFPropertyList;
 use core_foundation::string::CFString;
 use std::ptr;
+use sys::preferences::{SCPreferencesCopyKeyList, SCPreferencesGetValue};
 
 declare_TCFType! {
     /// The handle to an open preferences session for accessing system configuration preferences.
@@ -67,6 +70,39 @@ impl SCPreferences {
                 calling_process_name.as_concrete_TypeRef(),
                 prefs_id_ref,
             ))
+        }
+    }
+
+    /// Returns the currently defined preference keys.
+    ///
+    /// See [`SCPreferencesCopyKeyList`] for details.
+    ///
+    /// [`SCPreferencesCopyKeyList`]: https://developer.apple.com/documentation/systemconfiguration/scpreferencescopykeylist(_:)?language=objc
+    pub fn get_keys(&self) -> CFArray<CFString> {
+        unsafe {
+            let array_ref = SCPreferencesCopyKeyList(self.as_concrete_TypeRef());
+            assert!(!array_ref.is_null());
+            CFArray::wrap_under_create_rule(array_ref)
+        }
+    }
+
+    /// Retrieves the value associated with the specified preference key. Or `None` if no value exists.
+    ///
+    /// Use `CFPropertyList::downcast_into` to cast the result into the correct type.
+    ///
+    /// See [`SCPreferencesGetValue`] for details.
+    ///
+    /// [`SCPreferencesGetValue`]: https://developer.apple.com/documentation/systemconfiguration/scpreferencesgetvalue(_:_:)?language=objc
+    pub fn get<S: Into<CFString>>(&self, key: S) -> Option<CFPropertyList> {
+        let cf_key = key.into();
+        unsafe {
+            let dict_ref =
+                SCPreferencesGetValue(self.as_concrete_TypeRef(), cf_key.as_concrete_TypeRef());
+            if !dict_ref.is_null() {
+                Some(CFPropertyList::wrap_under_get_rule(dict_ref))
+            } else {
+                None
+            }
         }
     }
 }
