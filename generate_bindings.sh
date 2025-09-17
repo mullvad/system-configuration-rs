@@ -286,13 +286,6 @@ cleanup_binding $PREFERENCES_PATH_BINDING_PATH
 echo ""
 echo ""
 
-#    --allowlist-function "SCPreferences.*" \
-#    --blocklist-type "(__)?CF.*" \
-#    --blocklist-type "Boolean" \
-#    --blocklist-type "dispatch_queue_[ts]" \
-#    --blocklist-type "(AuthorizationOpaqueRef|__SCPreferences)" \
-
-
 # ---------------- Bindgen: SCSchemaDefinitions.h => schema_definitions.rs ----------------
 echo "Generating bindings for $SCHEMA_DEFINITIONS_HEADER_PATH"
 bindgen \
