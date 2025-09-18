@@ -26,6 +26,10 @@ Line wrap the file at 100 chars.                                              Th
 ### Added
 - Added `std::error::Error` implementation for `ReachabilityError`.
 
+### Fixed
+- Handle errors that may occur when creating runloop sources or an `SCDynamicStore`.
+
+
 ## [0.6.1] - 2024-08-22
 ### Fixed
 - Fix `std::net::SocketAddr` conversion to `libc::sockaddr`. This makes `SCNetworkReachability`
