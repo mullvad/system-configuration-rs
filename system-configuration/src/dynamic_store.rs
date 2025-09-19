@@ -75,7 +75,7 @@ impl SCDynamicStoreBuilder<()> {
 }
 
 impl<T> SCDynamicStoreBuilder<T> {
-    /// Set wether or not the created [`SCDynamicStore`] should have session keys or not.
+    /// Set whether or not the created [`SCDynamicStore`] should have session keys or not.
     /// See [`SCDynamicStoreCreateWithOptions`] for details.
     ///
     /// Defaults to `false`.
@@ -179,7 +179,7 @@ impl SCDynamicStore {
     }
 
     /// Returns the keys that represent the current dynamic store entries that match the specified
-    /// pattern. Or `None` if an error occured.
+    /// pattern. Or `None` if an error occurred.
     ///
     /// `pattern` - A regular expression pattern used to match the dynamic store keys.
     pub fn get_keys<S: Into<CFString>>(&self, pattern: S) -> Option<CFArray<CFString>> {
@@ -198,7 +198,7 @@ impl SCDynamicStore {
     }
 
     /// Returns the key-value pairs that represent the current internet proxy settings. Or `None` if
-    /// no proxy settings have been defined or if an error occured.
+    /// no proxy settings have been defined or if an error occurred.
     pub fn get_proxies(&self) -> Option<CFDictionary<CFString, CFType>> {
         unsafe {
             let dictionary_ref = SCDynamicStoreCopyProxies(self.as_concrete_TypeRef());
