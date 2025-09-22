@@ -18,7 +18,10 @@ use core_foundation::base::{CFAllocator, TCFType};
 use core_foundation::propertylist::CFPropertyList;
 use core_foundation::string::CFString;
 use std::ptr;
-use sys::preferences::{SCPreferencesCopyKeyList, SCPreferencesGetValue};
+use sys::preferences::{
+    AuthorizationRef, SCPreferencesCopyKeyList, SCPreferencesCreateWithAuthorization,
+    SCPreferencesGetValue,
+};
 
 declare_TCFType! {
     /// The handle to an open preferences session for accessing system configuration preferences.
@@ -69,6 +72,67 @@ impl SCPreferences {
                 allocator_ref,
                 calling_process_name.as_concrete_TypeRef(),
                 prefs_id_ref,
+            ))
+        }
+    }
+
+    /// Initiates access to the default system preferences using the default allocator with the
+    /// given authorization.
+    pub unsafe fn default_with_authorization(
+        calling_process_name: &CFString,
+        authorization_ref: AuthorizationRef,
+    ) -> Self {
+        Self::new_with_authorization(None, calling_process_name, None, authorization_ref)
+    }
+
+    /// Initiates access to the given (`prefs_id`) group of configuration preferences using the
+    /// default allocator and the given authorization. To access the default system preferences
+    /// with the given authorization, use the [`default_with_authorization`] constructor.
+    ///
+    /// [`default_with_authorization`]: #method.default_with_authorization
+    pub unsafe fn group_with_authorization(
+        calling_process_name: &CFString,
+        prefs_id: &CFString,
+        authorization_ref: AuthorizationRef,
+    ) -> Self {
+        Self::new_with_authorization(
+            None,
+            calling_process_name,
+            Some(prefs_id),
+            authorization_ref,
+        )
+    }
+
+    /// Initiates access to the per-system set of configuration preferences with a given allocator
+    /// and preference group to access, as well as authorization. See the underlying
+    /// [SCPreferencesCreateWithAuthorization] function documentation for details. Use the helper
+    /// constructors [`default_with_authorization`] and [`group_with_authorization`] to easier
+    /// create an instance using the default allocator.
+    ///
+    /// [SCPreferencesCreateWithAuthorization]: https://developer.apple.com/documentation/systemconfiguration/1516807-scpreferencescreate?language=objc
+    /// [`default_with_authorization`]: #method.default
+    /// [`group_with_authorization`]: #method.group
+    pub unsafe fn new_with_authorization(
+        allocator: Option<&CFAllocator>,
+        calling_process_name: &CFString,
+        prefs_id: Option<&CFString>,
+        authorization_ref: AuthorizationRef,
+    ) -> Self {
+        let allocator_ref = match allocator {
+            Some(allocator) => allocator.as_concrete_TypeRef(),
+            None => ptr::null(),
+        };
+        let prefs_id_ref = match prefs_id {
+            Some(prefs_id) => prefs_id.as_concrete_TypeRef(),
+            None => ptr::null(),
+        };
+
+        unsafe {
+            SCPreferences::wrap_under_create_rule(SCPreferencesCreateWithAuthorization(
+                allocator_ref,
+                calling_process_name.as_concrete_TypeRef(),
+                prefs_id_ref,
+                authorization_ref,
             ))
         }
     }

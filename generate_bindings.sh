@@ -165,7 +165,7 @@ bindgen \
     "${BINDGEN_COMMON_ARGUMENTS[@]}" \
     --allowlist-function "SCNetwork.*" \
     --allowlist-function "SCBondInterface.*" \
-    --allowlist-var "kSC(NetworkInterface|BondStatus).*" \
+    --allowlist-var "kSC(NetworkInterface|NetworkProtocol|BondStatus).*" \
     --blocklist-type "SCNetworkReachability.*" \
     --blocklist-function "SCNetworkReachability.*" \
     --blocklist-type "dispatch_queue_[ts]" \
