@@ -1,12 +1,22 @@
 use std::os;
-use core_foundation::array::CFArray;
-use core_foundation::base::{Boolean, CFRetain, CFType, CFTypeID, CFTypeRef, TCFType, TCFTypeRef, ToVoid};
-use core_foundation::dictionary::CFDictionary;
-use core_foundation::propertylist::CFPropertyList;
-use core_foundation::string::CFString;
-use sys::network_configuration::SCNetworkInterfaceGetTypeID;
-use sys::preferences::SCPreferencesRef;
-use sys::private::network_configuration_private::{SCBridgeInterfaceCopyAll, SCBridgeInterfaceCopyAvailableMemberInterfaces, SCBridgeInterfaceCreate, SCBridgeInterfaceGetAllowConfiguredMembers, SCBridgeInterfaceGetMemberInterfaces, SCBridgeInterfaceGetOptions, SCBridgeInterfaceRef, SCBridgeInterfaceRemove, SCBridgeInterfaceSetAllowConfiguredMembers, SCBridgeInterfaceSetMemberInterfaces, SCBridgeInterfaceSetOptions};
+use core_foundation::{
+    array::CFArray,
+    base::{Boolean, CFRetain, CFType, CFTypeID, CFTypeRef, TCFType, TCFTypeRef, ToVoid},
+    dictionary::CFDictionary,
+    string::CFString,
+
+};
+use sys::{
+    network_configuration::SCNetworkInterfaceGetTypeID,
+    preferences::SCPreferencesRef,
+    private::network_configuration_private::{
+        SCBridgeInterfaceCopyAll, SCBridgeInterfaceCopyAvailableMemberInterfaces, SCBridgeInterfaceCreate,
+        SCBridgeInterfaceGetAllowConfiguredMembers, SCBridgeInterfaceGetMemberInterfaces, SCBridgeInterfaceGetOptions,
+        SCBridgeInterfaceRef, SCBridgeInterfaceRemove, SCBridgeInterfaceSetAllowConfiguredMembers,
+        SCBridgeInterfaceSetMemberInterfaces, SCBridgeInterfaceSetOptions
+    },
+};
+
 use crate::helpers::create_empty_array;
 use crate::network_configuration::{SCNetworkInterface, SCNetworkInterfaceSubClass, SCNetworkInterfaceType};
 use crate::preferences::SCPreferences;
@@ -36,8 +46,6 @@ const _: () = {
         #[inline]
         unsafe fn wrap_under_create_rule(reference: SCBridgeInterfaceRef) -> Self {
             assert!(!reference.is_null(), "Attempted to create a NULL object.");
-
-
             SCBridgeInterface(reference)
         }
 
@@ -94,8 +102,6 @@ const _: () = {
         const INTERFACE_TYPE: SCNetworkInterfaceType = SCNetworkInterfaceType::Bridge;
     }
 };
-
-
 
 impl SCBridgeInterface {
     /// Retrieve all network capable devices on the system that can be added to a bridge interface.
