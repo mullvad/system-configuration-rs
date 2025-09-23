@@ -29,3 +29,23 @@ pub mod dynamic_store;
 pub mod network_configuration;
 pub mod network_reachability;
 pub mod preferences;
+
+#[cfg(feature = "private")]
+pub(crate) mod private;
+
+pub(crate) mod helpers {
+    use core_foundation::array::CFArray;
+    use core_foundation::base::TCFType;
+
+    pub fn create_empty_array<T>() -> CFArray<T> {
+        use std::ptr::null;
+        unsafe {
+            CFArray::wrap_under_create_rule(core_foundation::array::CFArrayCreate(
+                null() as *const _,
+                null() as *const _,
+                0,
+                null() as *const _,
+            ))
+        }
+    }
+}

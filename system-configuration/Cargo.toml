@@ -11,7 +11,10 @@ readme = "../README.md"
 edition = "2021"
 rust-version = "1.64.0"
 
+[features]
+private = ["system-configuration-sys/private"]
+
 [dependencies]
 core-foundation = "0.9"
-system-configuration-sys = { path = "../system-configuration-sys", version = "0.6" }
+system-configuration-sys = { path = "../system-configuration-sys", version = "0.6", default-features = false }
 bitflags = "2"

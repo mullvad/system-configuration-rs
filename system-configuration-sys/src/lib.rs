@@ -31,3 +31,6 @@ pub mod preferences;
 pub mod preferences_path;
 pub mod schema_definitions;
 pub mod system_configuration;
+
+#[cfg(feature = "private")]
+pub mod private;

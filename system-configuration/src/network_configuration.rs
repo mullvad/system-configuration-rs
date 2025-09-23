@@ -1,31 +1,50 @@
 //! Bindings for [`SCNetworkConfiguration`].
 //!
 //! [`SCNetworkConfiguration`]: https://developer.apple.com/documentation/systemconfiguration/scnetworkconfiguration?language=objc
+
+use std::mem;
 use core_foundation::{
     array::CFArray,
-    base::{Boolean, TCFType, ToVoid},
+    base::{Boolean, TCFType, ToVoid, TCFTypeRef, CFType},
     string::CFString,
+    dictionary::CFDictionary,
 };
-use sys::network_configuration::{
-    SCNetworkInterfaceCopyAll, SCNetworkInterfaceGetBSDName,
-    SCNetworkInterfaceGetHardwareAddressString, SCNetworkInterfaceGetInterface,
-    SCNetworkInterfaceGetInterfaceType, SCNetworkInterfaceGetLocalizedDisplayName,
-    SCNetworkInterfaceGetSupportedInterfaceTypes, SCNetworkInterfaceGetSupportedProtocolTypes,
-    SCNetworkInterfaceGetTypeID, SCNetworkInterfaceRef, SCNetworkProtocolGetEnabled,
-    SCNetworkProtocolGetProtocolType, SCNetworkProtocolGetTypeID, SCNetworkProtocolRef,
-    SCNetworkProtocolSetEnabled, SCNetworkServiceAddProtocolType, SCNetworkServiceCopy,
-    SCNetworkServiceCopyAll, SCNetworkServiceCopyProtocol, SCNetworkServiceCopyProtocols,
-    SCNetworkServiceCreate, SCNetworkServiceEstablishDefaultConfiguration,
-    SCNetworkServiceGetEnabled, SCNetworkServiceGetInterface, SCNetworkServiceGetServiceID,
-    SCNetworkServiceGetTypeID, SCNetworkServiceRef, SCNetworkServiceRemove,
-    SCNetworkServiceSetEnabled, SCNetworkSetAddService, SCNetworkSetContainsInterface,
-    SCNetworkSetCopy, SCNetworkSetCopyAll, SCNetworkSetCopyCurrent, SCNetworkSetCopyServices,
-    SCNetworkSetGetName, SCNetworkSetGetServiceOrder, SCNetworkSetGetSetID, SCNetworkSetGetTypeID,
-    SCNetworkSetRef, SCNetworkSetRemove, SCNetworkSetRemoveService, SCNetworkSetSetCurrent,
-    SCNetworkSetSetServiceOrder,
-};
+use sys::network_configuration::{SCNetworkInterfaceCopyAll, SCNetworkInterfaceGetBSDName, SCNetworkInterfaceGetHardwareAddressString, SCNetworkInterfaceGetInterface, SCNetworkInterfaceGetInterfaceType, SCNetworkInterfaceGetLocalizedDisplayName, SCNetworkInterfaceGetSupportedInterfaceTypes, SCNetworkInterfaceGetSupportedProtocolTypes, SCNetworkInterfaceGetTypeID, SCNetworkInterfaceRef, SCNetworkProtocolGetConfiguration, SCNetworkProtocolGetEnabled, SCNetworkProtocolGetProtocolType, SCNetworkProtocolGetTypeID, SCNetworkProtocolRef, SCNetworkProtocolSetConfiguration, SCNetworkProtocolSetEnabled, SCNetworkServiceAddProtocolType, SCNetworkServiceCopy, SCNetworkServiceCopyAll, SCNetworkServiceCopyProtocol, SCNetworkServiceCopyProtocols, SCNetworkServiceCreate, SCNetworkServiceEstablishDefaultConfiguration, SCNetworkServiceGetEnabled, SCNetworkServiceGetInterface, SCNetworkServiceGetServiceID, SCNetworkServiceGetTypeID, SCNetworkServiceRef, SCNetworkServiceRemove, SCNetworkServiceSetEnabled, SCNetworkSetAddService, SCNetworkSetContainsInterface, SCNetworkSetCopy, SCNetworkSetCopyAll, SCNetworkSetCopyCurrent, SCNetworkSetCopyServices, SCNetworkSetGetName, SCNetworkSetGetServiceOrder, SCNetworkSetGetSetID, SCNetworkSetGetTypeID, SCNetworkSetRef, SCNetworkSetRemove, SCNetworkSetRemoveService, SCNetworkSetSetCurrent, SCNetworkSetSetServiceOrder};
 
 use crate::preferences::SCPreferences;
+use crate::helpers::create_empty_array;
+
+#[cfg(feature = "private")]
+pub use crate::private::network_configuration_private::*;
+
+/// Trait for all subclasses of [`SCNetworkInterface`].
+///
+/// [`SCNetworkInterface`]: struct.SCNetworkInterface.html
+pub unsafe trait SCNetworkInterfaceSubClass: TCFType {
+    /// Determines what the type subclass of [`SCNetworkInterface`] this is.
+    const INTERFACE_TYPE: SCNetworkInterfaceType;
+
+    /// Create an instance of the superclass type [`SCNetworkInterface`] for this instance.
+    ///
+    /// [`SCNetworkInterface`]: struct.SCNetworkInterface.html
+    #[inline]
+    fn to_SCNetworkInterface(&self) -> SCNetworkInterface {
+        unsafe { SCNetworkInterface::wrap_under_get_rule(self.as_concrete_TypeRef().as_void_ptr()) }
+    }
+
+    /// Equal to [`to_SCNetworkInterface`], but consumes self and avoids changing the reference count.
+    ///
+    /// [`to_SCNetworkInterface`]: #method.to_SCNetworkInterface
+    #[inline]
+    fn into_SCNetworkInterface(self) -> SCNetworkInterface
+    where
+        Self: Sized,
+    {
+        let reference = self.as_concrete_TypeRef().as_void_ptr();
+        mem::forget(self);
+        unsafe { SCNetworkInterface::wrap_under_create_rule(reference) }
+    }
+}
 
 core_foundation::declare_TCFType!(
     /// Represents a network interface.
@@ -42,6 +61,7 @@ core_foundation::impl_TCFType!(
     SCNetworkInterfaceRef,
     SCNetworkInterfaceGetTypeID
 );
+core_foundation::impl_CFTypeDescription!(SCNetworkInterface);
 
 // TODO: implement all the other methods a SCNetworkInterface has
 impl SCNetworkInterface {
@@ -52,6 +72,37 @@ impl SCNetworkInterface {
     /// [`SCNetworkInterfaceCopyAll`]: https://developer.apple.com/documentation/systemconfiguration/1517090-scnetworkinterfacecopyall?language=objc
     pub fn get_interfaces() -> CFArray<Self> {
         get_interfaces()
+    }
+
+    /// Try to downcast the [`SCNetworkInterface`] to a subclass. Checking if the instance is the
+    /// correct subclass happens at runtime and `None` is returned if it is not the correct type.
+    /// Works similar to [`CFPropertyList::downcast`](core_foundation::propertylist::CFPropertyList::downcast)
+    /// and [`CFType::downcast`](core_foundation::base::CFType::downcast).
+    pub fn downcast_SCNetworkInterface<T: SCNetworkInterfaceSubClass>(&self) -> Option<T> {
+        if self.instance_of::<T>() && self.interface_type()? == T::INTERFACE_TYPE {
+            unsafe {
+                let subclass_ref = T::Ref::from_void_ptr(self.0);
+                Some(T::wrap_under_get_rule(subclass_ref))
+            }
+        } else {
+            None
+        }
+    }
+
+    /// Similar to [`downcast_SCNetworkInterface`], but consumes self and can thus avoid touching
+    /// the retain count.
+    ///
+    /// [`downcast_SCNetworkInterface`]: #method.downcast_SCNetworkInterface
+    pub fn downcast_into_SCNetworkInterface<T: SCNetworkInterfaceSubClass>(self) -> Option<T> {
+        if self.instance_of::<T>() && self.interface_type()? == T::INTERFACE_TYPE {
+            unsafe {
+                let subclass_ref = T::Ref::from_void_ptr(self.0);
+                mem::forget(self);
+                Some(T::wrap_under_create_rule(subclass_ref))
+            }
+        } else {
+            None
+        }
     }
 
     /// Get type of the network interface, if the type is recognized, returns `None` otherwise.
@@ -182,7 +233,7 @@ impl SCNetworkInterface {
 /// See [_Network Interface Types_] documentation for details.
 ///
 /// [_Network Interface Types_]: https://developer.apple.com/documentation/systemconfiguration/scnetworkconfiguration/network_interface_types?language=objc
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum SCNetworkInterfaceType {
     /// A 6to4 interface.
     SixToFour,
@@ -223,7 +274,9 @@ pub enum SCNetworkInterfaceType {
 }
 
 /// Bridge interface type referred to as `kSCNetworkInterfaceTypeBridge` in private headers.
+#[cfg(not(feature = "private"))]
 static BRIDGE_INTERFACE_TYPE_ID: &str = "Bridge";
+
 
 /// IrDA interface referenced as `kSCNetworkInterfaceTypeIrDA` but deprecated since macOS 12.
 static IRDA_INTERFACE_TYPE_ID: &str = "IrDA";
@@ -232,6 +285,8 @@ impl SCNetworkInterfaceType {
     /// Tries to construct a type by matching it to string constants used to identify a network
     /// interface type. If no constants match it, `None` is returned.
     pub fn from_cfstring(type_id: &CFString) -> Option<Self> {
+        #[cfg(feature = "private")]
+        use system_configuration_sys::private::network_configuration_private::*;
         use system_configuration_sys::network_configuration::*;
 
         let id_is_equal_to = |const_str| -> bool {
@@ -243,7 +298,15 @@ impl SCNetworkInterfaceType {
                 Some(SCNetworkInterfaceType::SixToFour)
             } else if id_is_equal_to(kSCNetworkInterfaceTypeBluetooth) {
                 Some(SCNetworkInterfaceType::Bluetooth)
-            } else if type_id == &BRIDGE_INTERFACE_TYPE_ID {
+            } else if {
+                #[cfg(feature = "private")]
+                let matches = id_is_equal_to(kSCNetworkInterfaceTypeBridge);
+
+                #[cfg(not(feature = "private"))]
+                let matches = type_id == &BRIDGE_INTERFACE_TYPE_ID;
+
+                matches
+            } {
                 Some(SCNetworkInterfaceType::Bridge)
             } else if id_is_equal_to(kSCNetworkInterfaceTypeBond) {
                 Some(SCNetworkInterfaceType::Bond)
@@ -281,13 +344,23 @@ impl SCNetworkInterfaceType {
 
     /// Returns the string constants used to identify this network interface type.
     pub fn to_cfstring(&self) -> CFString {
+        #[cfg(feature = "private")]
+        use system_configuration_sys::private::network_configuration_private::*;
         use system_configuration_sys::network_configuration::*;
         let wrap_const = |const_str| unsafe { CFString::wrap_under_get_rule(const_str) };
         unsafe {
             match self {
                 SCNetworkInterfaceType::SixToFour => wrap_const(kSCNetworkInterfaceType6to4),
                 SCNetworkInterfaceType::Bluetooth => wrap_const(kSCNetworkInterfaceTypeBluetooth),
-                SCNetworkInterfaceType::Bridge => BRIDGE_INTERFACE_TYPE_ID.into(),
+                SCNetworkInterfaceType::Bridge => {
+                    #[cfg(feature = "private")]
+                    let val = wrap_const(kSCNetworkInterfaceTypeBridge);
+
+                    #[cfg(not(feature = "private"))]
+                    let val = BRIDGE_INTERFACE_TYPE_ID.into();
+
+                    val
+                },
                 SCNetworkInterfaceType::Bond => wrap_const(kSCNetworkInterfaceTypeBond),
                 SCNetworkInterfaceType::Ethernet => wrap_const(kSCNetworkInterfaceTypeEthernet),
                 SCNetworkInterfaceType::FireWire => wrap_const(kSCNetworkInterfaceTypeFireWire),
@@ -331,6 +404,7 @@ core_foundation::impl_TCFType!(
     SCNetworkProtocolRef,
     SCNetworkProtocolGetTypeID
 );
+core_foundation::impl_CFTypeDescription!(SCNetworkProtocol);
 
 // TODO: implement all the other methods a SCNetworkProtocol has
 impl SCNetworkProtocol {
@@ -364,11 +438,35 @@ impl SCNetworkProtocol {
         }
     }
 
+    /// Returns the configuration settings associated with the specified protocol. Or `None` if no
+    /// configuration settings are associated with the protocol or an error occurred.
+    ///
+    /// See [`SCNetworkProtocolGetConfiguration`] for details.
+    ///
+    /// [`SCNetworkProtocolGetConfiguration`]: https://developer.apple.com/documentation/systemconfiguration/scnetworkprotocolgetconfiguration(_:)?language=objc
+    pub fn configuration(&self) -> Option<CFDictionary<CFString, CFType>> {
+        unsafe {
+            let dictionary_ref = SCNetworkProtocolGetConfiguration(self.as_concrete_TypeRef());
+            if !dictionary_ref.is_null() {
+                Some(CFDictionary::wrap_under_get_rule(dictionary_ref))
+            } else {
+                None
+            }
+        }
+    }
+
     /// Enables or disables the specified protocol.
     ///
     /// Returns: `true` if the enabled status was saved; `false` if an error occurred.
     pub fn set_enabled(&mut self, enabled: bool) -> bool {
         (unsafe { SCNetworkProtocolSetEnabled(self.0, enabled as Boolean) }) != 0
+    }
+
+    /// Stores the configuration settings for the specified network protocol.
+    ///
+    /// Returns: `true` if the configuration was stored; `false` if an error occurred.
+    pub fn set_configuration(&mut self, config: &CFDictionary<CFString, CFType>) -> bool {
+        (unsafe { SCNetworkProtocolSetConfiguration(self.0, config.as_concrete_TypeRef()) }) != 0
     }
 }
 
@@ -377,7 +475,7 @@ impl SCNetworkProtocol {
 /// See [_Network Protocol Types_] documentation for details.
 ///
 /// [_Network Protocol Types_]: https://developer.apple.com/documentation/systemconfiguration/network-protocol-types?language=objc
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum SCNetworkProtocolType {
     /// DNS protocol.
     DNS,
@@ -450,6 +548,7 @@ core_foundation::impl_TCFType!(
     SCNetworkServiceRef,
     SCNetworkServiceGetTypeID
 );
+core_foundation::impl_CFTypeDescription!(SCNetworkService);
 
 impl SCNetworkService {
     /// Returns an array of all network services
@@ -613,8 +712,8 @@ core_foundation::declare_TCFType!(
     SCNetworkSet,
     SCNetworkSetRef
 );
-
 core_foundation::impl_TCFType!(SCNetworkSet, SCNetworkSetRef, SCNetworkSetGetTypeID);
+core_foundation::impl_CFTypeDescription!(SCNetworkSet);
 
 impl SCNetworkSet {
     /// Returns all available sets for the specified preferences session.
@@ -757,18 +856,6 @@ impl SCNetworkSet {
     pub fn set_service_order(&mut self, new_order: CFArray<CFString>) -> bool {
         let cf_order_ref = new_order.as_concrete_TypeRef();
         (unsafe { SCNetworkSetSetServiceOrder(self.0, cf_order_ref) }) != 0
-    }
-}
-
-fn create_empty_array<T>() -> CFArray<T> {
-    use std::ptr::null;
-    unsafe {
-        CFArray::wrap_under_create_rule(core_foundation::array::CFArrayCreate(
-            null() as *const _,
-            null() as *const _,
-            0,
-            null() as *const _,
-        ))
     }
 }
 
