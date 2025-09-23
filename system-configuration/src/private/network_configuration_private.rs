@@ -4,11 +4,9 @@ use core_foundation::{
     base::{Boolean, CFRetain, CFType, CFTypeID, CFTypeRef, TCFType, TCFTypeRef, ToVoid},
     dictionary::CFDictionary,
     string::CFString,
-
 };
 use sys::{
     network_configuration::SCNetworkInterfaceGetTypeID,
-    preferences::SCPreferencesRef,
     private::network_configuration_private::{
         SCBridgeInterfaceCopyAll, SCBridgeInterfaceCopyAvailableMemberInterfaces, SCBridgeInterfaceCreate,
         SCBridgeInterfaceGetAllowConfiguredMembers, SCBridgeInterfaceGetMemberInterfaces, SCBridgeInterfaceGetOptions,
