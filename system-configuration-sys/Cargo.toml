@@ -9,6 +9,9 @@ repository = "https://github.com/mullvad/system-configuration-rs"
 license = "MIT OR Apache-2.0"
 edition = "2021"
 
+[features]
+private = []
+
 [dependencies]
 core-foundation-sys = "0.8"
 libc = "0.2.149"

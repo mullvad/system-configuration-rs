@@ -28,5 +28,9 @@ pub mod dynamic_store_copy_specific;
 pub mod network_configuration;
 pub mod network_reachability;
 pub mod preferences;
+pub mod preferences_path;
 pub mod schema_definitions;
 pub mod system_configuration;
+
+#[cfg(feature = "private")]
+pub mod private;

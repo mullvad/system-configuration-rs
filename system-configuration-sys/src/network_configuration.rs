@@ -170,6 +170,17 @@ extern "C" {
     pub static kSCBondStatusDeviceDistributing: CFStringRef;
 }
 pub type SCNetworkProtocolRef = *const __SCNetworkProtocol;
+extern "C" {
+    pub static kSCNetworkProtocolTypeDNS: CFStringRef;
+
+    pub static kSCNetworkProtocolTypeIPv4: CFStringRef;
+
+    pub static kSCNetworkProtocolTypeIPv6: CFStringRef;
+
+    pub static kSCNetworkProtocolTypeProxies: CFStringRef;
+
+    pub static kSCNetworkProtocolTypeSMB: CFStringRef;
+}
 pub type SCNetworkServiceRef = *const __SCNetworkService;
 pub type SCNetworkSetRef = *const __SCNetworkSet;
 extern "C" {
