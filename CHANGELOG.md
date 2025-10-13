@@ -26,6 +26,9 @@ Line wrap the file at 100 chars.                                              Th
 ### Added
 - Added `std::error::Error` implementation for `ReachabilityError`.
 
+### Changed
+- Bump minimum supported Rust version (MSRV) to 1.71.0.
+
 ### Fixed
 - Handle errors that may occur when creating runloop sources or an `SCDynamicStore`.
 
