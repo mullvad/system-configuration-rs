@@ -1,36 +1,27 @@
 //! Bindings for [`SCNetworkConfiguration`].
 //!
 //! [`SCNetworkConfiguration`]: https://developer.apple.com/documentation/systemconfiguration/scnetworkconfiguration?language=objc
-use core_foundation::{
-    array::CFArray,
-    base::{TCFType, ToVoid},
-    string::CFString,
+#[allow(deprecated)]
+use crate::sys::kSCNetworkInterfaceTypePPTP;
+use crate::sys::{
+    self, kSCNetworkInterfaceType6to4, kSCNetworkInterfaceTypeBluetooth,
+    kSCNetworkInterfaceTypeBond, kSCNetworkInterfaceTypeEthernet, kSCNetworkInterfaceTypeFireWire,
+    kSCNetworkInterfaceTypeIEEE80211, kSCNetworkInterfaceTypeIPSec, kSCNetworkInterfaceTypeIPv4,
+    kSCNetworkInterfaceTypeL2TP, kSCNetworkInterfaceTypeModem, kSCNetworkInterfaceTypePPP,
+    kSCNetworkInterfaceTypeSerial, kSCNetworkInterfaceTypeVLAN, kSCNetworkInterfaceTypeWWAN,
 };
-use system_configuration_sys::network_configuration::{
-    SCNetworkInterfaceCopyAll, SCNetworkInterfaceGetBSDName, SCNetworkInterfaceGetInterfaceType,
-    SCNetworkInterfaceGetLocalizedDisplayName, SCNetworkInterfaceGetTypeID, SCNetworkInterfaceRef,
-    SCNetworkServiceCopyAll, SCNetworkServiceGetEnabled, SCNetworkServiceGetInterface,
-    SCNetworkServiceGetServiceID, SCNetworkServiceGetTypeID, SCNetworkServiceRef,
-    SCNetworkSetCopyCurrent, SCNetworkSetGetServiceOrder, SCNetworkSetGetTypeID, SCNetworkSetRef,
-};
+use objc2_core_foundation::{CFArray, CFRetained, CFString};
 
 use crate::preferences::SCPreferences;
 
-core_foundation::declare_TCFType!(
-    /// Represents a network interface.
-    ///
-    /// See [`SCNetworkInterfaceRef`] and its [methods] for details.
-    ///
-    /// [`SCNetworkInterfaceRef`]: https://developer.apple.com/documentation/systemconfiguration/scnetworkinterfaceref?language=objc
-    /// [methods]: https://developer.apple.com/documentation/systemconfiguration/scnetworkconfiguration?language=objc
-    SCNetworkInterface,
-    SCNetworkInterfaceRef
-);
-core_foundation::impl_TCFType!(
-    SCNetworkInterface,
-    SCNetworkInterfaceRef,
-    SCNetworkInterfaceGetTypeID
-);
+/// Represents a network interface.
+///
+/// See [`SCNetworkInterfaceRef`] and its [methods] for details.
+///
+/// [`SCNetworkInterfaceRef`]: https://developer.apple.com/documentation/systemconfiguration/scnetworkinterfaceref?language=objc
+/// [methods]: https://developer.apple.com/documentation/systemconfiguration/scnetworkconfiguration?language=objc
+#[derive(Clone, PartialEq, Eq, Hash, Debug)]
+pub struct SCNetworkInterface(pub CFRetained<sys::SCNetworkInterface>);
 
 // TODO: implement all the other methods a SCNetworkInterface has
 impl SCNetworkInterface {
@@ -40,7 +31,7 @@ impl SCNetworkInterface {
     ///
     /// [`SCNetworkInterfaceGetInterfaceType`]: https://developer.apple.com/documentation/systemconfiguration/1517371-scnetworkinterfacegetinterfacety?language=objc
     pub fn interface_type(&self) -> Option<SCNetworkInterfaceType> {
-        SCNetworkInterfaceType::from_cfstring(&self.interface_type_string()?)
+        SCNetworkInterfaceType::from_cfstring(&*self.interface_type_string()?)
     }
 
     /// Returns the raw interface type identifier.
@@ -48,15 +39,8 @@ impl SCNetworkInterface {
     /// See [`SCNetworkInterfaceGetInterfaceType`] for details.
     ///
     /// [`SCNetworkInterfaceGetInterfaceType`]: https://developer.apple.com/documentation/systemconfiguration/1517371-scnetworkinterfacegetinterfacety?language=objc
-    pub fn interface_type_string(&self) -> Option<CFString> {
-        unsafe {
-            let ptr = SCNetworkInterfaceGetInterfaceType(self.0);
-            if ptr.is_null() {
-                None
-            } else {
-                Some(CFString::wrap_under_get_rule(ptr))
-            }
-        }
+    pub fn interface_type_string(&self) -> Option<CFRetained<CFString>> {
+        self.0.interface_type()
     }
 
     /// Returns the _BSD_ name for the interface, such as `en0`.
@@ -64,15 +48,8 @@ impl SCNetworkInterface {
     /// See [`SCNetworkInterfaceGetBSDName`] for details.
     ///
     /// [`SCNetworkInterfaceGetBSDName`]: https://developer.apple.com/documentation/systemconfiguration/1516854-scnetworkinterfacegetbsdname?language=objc
-    pub fn bsd_name(&self) -> Option<CFString> {
-        unsafe {
-            let ptr = SCNetworkInterfaceGetBSDName(self.0);
-            if ptr.is_null() {
-                None
-            } else {
-                Some(CFString::wrap_under_get_rule(ptr))
-            }
-        }
+    pub fn bsd_name(&self) -> Option<CFRetained<CFString>> {
+        self.0.bsd_name()
     }
 
     /// Returns the localized display name for the interface.
@@ -80,15 +57,8 @@ impl SCNetworkInterface {
     /// See [`SCNetworkInterfaceGetLocalizedDisplayName`] for details.
     ///
     /// [`SCNetworkInterfaceGetLocalizedDisplayName`]: https://developer.apple.com/documentation/systemconfiguration/1517060-scnetworkinterfacegetlocalizeddi?language=objc
-    pub fn display_name(&self) -> Option<CFString> {
-        unsafe {
-            let ptr = SCNetworkInterfaceGetLocalizedDisplayName(self.0);
-            if ptr.is_null() {
-                None
-            } else {
-                Some(CFString::wrap_under_get_rule(ptr))
-            }
-        }
+    pub fn display_name(&self) -> Option<CFRetained<CFString>> {
+        self.0.localized_display_name()
     }
 }
 
@@ -146,47 +116,42 @@ static IRDA_INTERFACE_TYPE_ID: &str = "IrDA";
 impl SCNetworkInterfaceType {
     /// Tries to construct a type by matching it to string constants used to identify a network
     /// interface type. If no constants match it, `None` is returned.
+    #[allow(deprecated)]
     pub fn from_cfstring(type_id: &CFString) -> Option<Self> {
-        use system_configuration_sys::network_configuration::*;
-
-        let id_is_equal_to = |const_str| -> bool {
-            let const_str = unsafe { CFString::wrap_under_get_rule(const_str) };
-            &const_str == type_id
-        };
         unsafe {
-            if id_is_equal_to(kSCNetworkInterfaceType6to4) {
+            if type_id == kSCNetworkInterfaceType6to4 {
                 Some(SCNetworkInterfaceType::SixToFour)
-            } else if id_is_equal_to(kSCNetworkInterfaceTypeBluetooth) {
+            } else if type_id == kSCNetworkInterfaceTypeBluetooth {
                 Some(SCNetworkInterfaceType::Bluetooth)
-            } else if type_id == &BRIDGE_INTERFACE_TYPE_ID {
+            } else if *type_id == *CFString::from_static_str(BRIDGE_INTERFACE_TYPE_ID) {
                 Some(SCNetworkInterfaceType::Bridge)
-            } else if id_is_equal_to(kSCNetworkInterfaceTypeBond) {
+            } else if type_id == kSCNetworkInterfaceTypeBond {
                 Some(SCNetworkInterfaceType::Bond)
-            } else if id_is_equal_to(kSCNetworkInterfaceTypeEthernet) {
+            } else if type_id == kSCNetworkInterfaceTypeEthernet {
                 Some(SCNetworkInterfaceType::Ethernet)
-            } else if id_is_equal_to(kSCNetworkInterfaceTypeFireWire) {
+            } else if type_id == kSCNetworkInterfaceTypeFireWire {
                 Some(SCNetworkInterfaceType::FireWire)
-            } else if id_is_equal_to(kSCNetworkInterfaceTypeIEEE80211) {
+            } else if type_id == kSCNetworkInterfaceTypeIEEE80211 {
                 Some(SCNetworkInterfaceType::IEEE80211)
-            } else if id_is_equal_to(kSCNetworkInterfaceTypeIPSec) {
+            } else if type_id == kSCNetworkInterfaceTypeIPSec {
                 Some(SCNetworkInterfaceType::IPSec)
-            } else if type_id == &IRDA_INTERFACE_TYPE_ID {
+            } else if *type_id == *CFString::from_static_str(IRDA_INTERFACE_TYPE_ID) {
                 Some(SCNetworkInterfaceType::IrDA)
-            } else if id_is_equal_to(kSCNetworkInterfaceTypeL2TP) {
+            } else if type_id == kSCNetworkInterfaceTypeL2TP {
                 Some(SCNetworkInterfaceType::L2TP)
-            } else if id_is_equal_to(kSCNetworkInterfaceTypeModem) {
+            } else if type_id == kSCNetworkInterfaceTypeModem {
                 Some(SCNetworkInterfaceType::Modem)
-            } else if id_is_equal_to(kSCNetworkInterfaceTypePPP) {
+            } else if type_id == kSCNetworkInterfaceTypePPP {
                 Some(SCNetworkInterfaceType::PPP)
-            } else if id_is_equal_to(kSCNetworkInterfaceTypePPTP) {
+            } else if type_id == kSCNetworkInterfaceTypePPTP {
                 Some(SCNetworkInterfaceType::PPTP)
-            } else if id_is_equal_to(kSCNetworkInterfaceTypeSerial) {
+            } else if type_id == kSCNetworkInterfaceTypeSerial {
                 Some(SCNetworkInterfaceType::Serial)
-            } else if id_is_equal_to(kSCNetworkInterfaceTypeVLAN) {
+            } else if type_id == kSCNetworkInterfaceTypeVLAN {
                 Some(SCNetworkInterfaceType::VLAN)
-            } else if id_is_equal_to(kSCNetworkInterfaceTypeWWAN) {
+            } else if type_id == kSCNetworkInterfaceTypeWWAN {
                 Some(SCNetworkInterfaceType::WWAN)
-            } else if id_is_equal_to(kSCNetworkInterfaceTypeIPv4) {
+            } else if type_id == kSCNetworkInterfaceTypeIPv4 {
                 Some(SCNetworkInterfaceType::IPv4)
             } else {
                 None
@@ -200,109 +165,75 @@ impl SCNetworkInterfaceType {
 /// See [`SCNetworkInterfaceCopyAll`] for more details.
 ///
 /// [`SCNetworkInterfaceCopyAll`]: https://developer.apple.com/documentation/systemconfiguration/1517090-scnetworkinterfacecopyall?language=objc
-pub fn get_interfaces() -> CFArray<SCNetworkInterface> {
-    unsafe { CFArray::<SCNetworkInterface>::wrap_under_create_rule(SCNetworkInterfaceCopyAll()) }
+pub fn get_interfaces() -> impl Iterator<Item = SCNetworkInterface> {
+    let array = unsafe {
+        CFRetained::cast_unchecked::<CFArray<sys::SCNetworkInterface>>(
+            sys::SCNetworkInterface::all(),
+        )
+    };
+    array.into_iter().map(SCNetworkInterface)
 }
 
-core_foundation::declare_TCFType!(
-    /// Represents a network service.
-    ///
-    /// See [`SCNetworkInterfaceRef`] and its [methods] for details.
-    ///
-    /// [`SCNetworkInterfaceRef`]: https://developer.apple.com/documentation/systemconfiguration/scnetworkserviceref?language=objc
-    /// [methods]: https://developer.apple.com/documentation/systemconfiguration/scnetworkconfiguration?language=objc
-    SCNetworkService,
-    SCNetworkServiceRef
-);
-
-core_foundation::impl_TCFType!(
-    SCNetworkService,
-    SCNetworkServiceRef,
-    SCNetworkServiceGetTypeID
-);
+/// Represents a network service.
+///
+/// See [`SCNetworkInterfaceRef`] and its [methods] for details.
+///
+/// [`SCNetworkInterfaceRef`]: https://developer.apple.com/documentation/systemconfiguration/scnetworkserviceref?language=objc
+/// [methods]: https://developer.apple.com/documentation/systemconfiguration/scnetworkconfiguration?language=objc
+#[derive(Clone, PartialEq, Eq, Hash, Debug)]
+pub struct SCNetworkService(pub CFRetained<sys::SCNetworkService>);
 
 impl SCNetworkService {
     /// Returns an array of all network services
-    pub fn get_services(prefs: &SCPreferences) -> CFArray<Self> {
-        unsafe {
-            let array_ptr = SCNetworkServiceCopyAll(prefs.to_void());
-            if array_ptr.is_null() {
-                return create_empty_array();
-            }
-            CFArray::<Self>::wrap_under_create_rule(array_ptr)
+    pub fn get_services(prefs: &SCPreferences) -> Vec<Self> {
+        if let Some(array) = sys::SCNetworkService::all(&prefs.0) {
+            // SAFETY: The array is documented to contain `SCNetworkService`.
+            let array = unsafe { array.cast_unchecked::<sys::SCNetworkService>() };
+            array.iter().map(Self).collect()
+        } else {
+            Vec::new()
         }
     }
 
     /// Returns true if the network service is currently enabled
     pub fn enabled(&self) -> bool {
-        unsafe { SCNetworkServiceGetEnabled(self.0) == 0 }
+        self.0.enabled()
     }
 
     /// Returns the network interface backing this network service, if it has one.
     pub fn network_interface(&self) -> Option<SCNetworkInterface> {
-        unsafe {
-            let ptr = SCNetworkServiceGetInterface(self.0);
-            if ptr.is_null() {
-                None
-            } else {
-                Some(SCNetworkInterface::wrap_under_get_rule(ptr))
-            }
-        }
+        self.0.interface().map(SCNetworkInterface)
     }
 
     /// Returns the service identifier.
-    pub fn id(&self) -> Option<CFString> {
-        unsafe {
-            let ptr = SCNetworkServiceGetServiceID(self.0);
-            if ptr.is_null() {
-                None
-            } else {
-                Some(CFString::wrap_under_get_rule(ptr))
-            }
-        }
+    pub fn id(&self) -> Option<CFRetained<CFString>> {
+        self.0.service_id()
     }
 }
 
-core_foundation::declare_TCFType!(
-    /// Represents a complete network configuration for a particular host.
-    ///
-    /// See [`SCNetworkSet`] for details.
-    ///
-    /// [`SCNetworkSet`]: https://developer.apple.com/documentation/systemconfiguration/scnetworksetref?language=objc
-    SCNetworkSet,
-    SCNetworkSetRef
-);
-
-core_foundation::impl_TCFType!(SCNetworkSet, SCNetworkSetRef, SCNetworkSetGetTypeID);
+/// Represents a complete network configuration for a particular host.
+///
+/// See [`SCNetworkSet`] for details.
+///
+/// [`SCNetworkSet`]: https://developer.apple.com/documentation/systemconfiguration/scnetworksetref?language=objc
+#[derive(Clone, PartialEq, Eq, Hash, Debug)]
+pub struct SCNetworkSet(pub CFRetained<sys::SCNetworkSet>);
 
 impl SCNetworkSet {
     /// Constructs a new set of network services from the preferences.
     pub fn new(prefs: &SCPreferences) -> Self {
-        let ptr = unsafe { SCNetworkSetCopyCurrent(prefs.to_void()) };
-        unsafe { SCNetworkSet::wrap_under_create_rule(ptr) }
+        let set = sys::SCNetworkSet::current(&prefs.0).unwrap();
+        Self(set)
     }
 
     /// Returns an list of network service identifiers, ordered by their priority.
-    pub fn service_order(&self) -> CFArray<CFString> {
-        unsafe {
-            let array_ptr = SCNetworkSetGetServiceOrder(self.0);
-            if array_ptr.is_null() {
-                return create_empty_array();
-            }
-            CFArray::<CFString>::wrap_under_get_rule(array_ptr)
+    pub fn service_order(&self) -> CFRetained<CFArray<CFString>> {
+        if let Some(array) = self.0.service_order() {
+            // SAFETY: The array is documented to contain `CFString`.
+            unsafe { CFRetained::cast_unchecked::<CFArray<CFString>>(array) }
+        } else {
+            CFArray::empty()
         }
-    }
-}
-
-fn create_empty_array<T>() -> CFArray<T> {
-    use std::ptr::null;
-    unsafe {
-        CFArray::wrap_under_create_rule(core_foundation::array::CFArrayCreate(
-            null() as *const _,
-            null() as *const _,
-            0,
-            null() as *const _,
-        ))
     }
 }
 
@@ -317,7 +248,7 @@ mod test {
 
     #[test]
     fn test_get_type() {
-        for iface in get_interfaces().into_iter() {
+        for iface in get_interfaces() {
             if iface.interface_type().is_none() {
                 panic!(
                     "Interface  {:?} ({:?}) has unrecognized type {:?}",
@@ -331,7 +262,7 @@ mod test {
 
     #[test]
     fn test_service_order() {
-        let prefs = SCPreferences::default(&CFString::new("test"));
+        let prefs = SCPreferences::default(&CFString::from_static_str("test"));
         let services = SCNetworkService::get_services(&prefs);
         let set = SCNetworkSet::new(&prefs);
         let service_order = set.service_order();
@@ -339,14 +270,7 @@ mod test {
         assert!(service_order.iter().all(|service_id| {
             services
                 .iter()
-                .any(|service| service.id().as_ref() == Some(&*service_id))
+                .any(|service| service.id().as_deref() == Some(&*service_id))
         }))
-    }
-
-    #[test]
-    fn test_empty_array() {
-        let empty = create_empty_array::<CFString>();
-        let values = empty.get_all_values();
-        assert!(values.is_empty())
     }
 }

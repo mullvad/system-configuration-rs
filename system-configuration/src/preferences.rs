@@ -12,17 +12,12 @@
 //!
 //! [`SCPreferences`]: https://developer.apple.com/documentation/systemconfiguration/scpreferences-ft8
 
-use crate::sys::preferences::{SCPreferencesCreate, SCPreferencesGetTypeID, SCPreferencesRef};
-use core_foundation::base::{CFAllocator, TCFType};
-use core_foundation::string::CFString;
-use std::ptr;
+use crate::sys;
+use objc2_core_foundation::{CFAllocator, CFRetained, CFString};
 
-declare_TCFType! {
-    /// The handle to an open preferences session for accessing system configuration preferences.
-    SCPreferences, SCPreferencesRef
-}
-
-impl_TCFType!(SCPreferences, SCPreferencesRef, SCPreferencesGetTypeID);
+/// The handle to an open preferences session for accessing system configuration preferences.
+#[derive(Clone, PartialEq, Eq, Hash, Debug)]
+pub struct SCPreferences(pub CFRetained<sys::SCPreferences>);
 
 impl SCPreferences {
     /// Initiates access to the default system preferences using the default allocator.
@@ -52,22 +47,7 @@ impl SCPreferences {
         calling_process_name: &CFString,
         prefs_id: Option<&CFString>,
     ) -> Self {
-        let allocator_ref = match allocator {
-            Some(allocator) => allocator.as_concrete_TypeRef(),
-            None => ptr::null(),
-        };
-        let prefs_id_ref = match prefs_id {
-            Some(prefs_id) => prefs_id.as_concrete_TypeRef(),
-            None => ptr::null(),
-        };
-
-        unsafe {
-            SCPreferences::wrap_under_create_rule(SCPreferencesCreate(
-                allocator_ref,
-                calling_process_name.as_concrete_TypeRef(),
-                prefs_id_ref,
-            ))
-        }
+        Self(sys::SCPreferences::new(allocator, calling_process_name, prefs_id).unwrap())
     }
 }
 
@@ -77,7 +57,7 @@ mod tests {
 
     #[test]
     fn retain_count() {
-        let preferences = SCPreferences::default(&CFString::new("test"));
-        assert_eq!(preferences.retain_count(), 1);
+        let preferences = SCPreferences::default(&CFString::from_static_str("test"));
+        assert_eq!(preferences.0.retain_count(), 1);
     }
 }

@@ -8,22 +8,21 @@
 
 //! # SystemConfiguration bindings
 //!
-//! This crate is a high level binding to the Apple [SystemConfiguration] framework. For low level
-//! FFI bindings, check out the [`system-configuration-sys`] crate.
+//! This crate provides a bit safer bindings to the Apple [SystemConfiguration] framework. For
+//! direct bindings, check out the [`objc2-system-configuration`] crate (re-exported as [`sys`]).
 //!
 //! This crate only implements a small part of the [SystemConfiguration] framework so far. If you
 //! need a yet unimplemented part, feel free to submit a pull request!
 //!
 //! [SystemConfiguration]: https://developer.apple.com/documentation/systemconfiguration?language=objc
-//! [`system-configuration-sys`]: https://crates.io/crates/system-configuration-sys
+//! [`objc2-system-configuration`]: objc2_system_configuration
 
 #![deny(missing_docs)]
 
-/// CoreFoundation wrappers
-#[macro_use]
-pub extern crate core_foundation;
-/// Low-level SystemConfiguration bindings
-pub extern crate system_configuration_sys as sys;
+/// CoreFoundation wrappers.
+pub use objc2_core_foundation as core_foundation;
+/// Auto-generated SystemConfiguration bindings.
+pub use objc2_system_configuration as sys;
 
 pub mod dynamic_store;
 pub mod network_configuration;

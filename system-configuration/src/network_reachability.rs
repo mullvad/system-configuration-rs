@@ -1,35 +1,17 @@
 //! Bindings for [`SCNetworkReachability`]
 //!
 //! [`SCNetworkReachability`]: https://developer.apple.com/documentation/systemconfiguration/scnetworkreachability-g7d
+#![allow(deprecated)]
 
-use core_foundation::{
-    base::{TCFType, ToVoid},
-    runloop::CFRunLoop,
-    string::{CFString, CFStringRef},
-};
-use system_configuration_sys::{
-    libc,
-    network_reachability::{
-        kSCNetworkReachabilityFlagsConnectionOnDemand,
-        kSCNetworkReachabilityFlagsConnectionOnTraffic,
-        kSCNetworkReachabilityFlagsConnectionRequired,
-        kSCNetworkReachabilityFlagsInterventionRequired, kSCNetworkReachabilityFlagsIsDirect,
-        kSCNetworkReachabilityFlagsIsLocalAddress, kSCNetworkReachabilityFlagsIsWWAN,
-        kSCNetworkReachabilityFlagsReachable, kSCNetworkReachabilityFlagsTransientConnection,
-        SCNetworkReachabilityContext, SCNetworkReachabilityCreateWithAddress,
-        SCNetworkReachabilityCreateWithAddressPair, SCNetworkReachabilityCreateWithName,
-        SCNetworkReachabilityFlags, SCNetworkReachabilityGetFlags, SCNetworkReachabilityGetTypeID,
-        SCNetworkReachabilityRef, SCNetworkReachabilityScheduleWithRunLoop,
-        SCNetworkReachabilitySetCallback, SCNetworkReachabilityUnscheduleFromRunLoop,
-    },
-};
+use crate::sys::{self, SCNetworkReachabilityContext, SCNetworkReachabilityFlags};
+use objc2_core_foundation::{CFRetained, CFRunLoop, CFRunLoopMode, CFString};
 
 use std::{
     error::Error,
     ffi::{c_void, CStr},
     fmt::{self, Display},
     net::SocketAddr,
-    ptr,
+    ptr::NonNull,
     sync::Arc,
 };
 
@@ -102,51 +84,43 @@ bitflags::bitflags! {
     pub struct ReachabilityFlags: u32 {
         /// The specified node name or address can be reached via a transient connection, such as
         /// PPP.
-        const TRANSIENT_CONNECTION = kSCNetworkReachabilityFlagsTransientConnection;
+        const TRANSIENT_CONNECTION = SCNetworkReachabilityFlags::TransientConnection.0;
         /// The specified node name or address can be reached using the current network
         /// configuration.
-        const REACHABLE = kSCNetworkReachabilityFlagsReachable;
+        const REACHABLE = SCNetworkReachabilityFlags::Reachable.0;
         /// The specified node name or address can be reached using the current network
         /// configuration, but a connection must first be established. If this flag is set, the
         /// `CONNECTION_ON_TRAFFIC` flag, `CONNECTION_ON_DEMAND` flag, or `IS_WANN` flag is also
         /// typically set to indicate the type of connection required. If the user must manually
         /// make the connection, the `INTERVENTION_REQUIRED` flag is also set.
-        const CONNECTION_REQUIRED = kSCNetworkReachabilityFlagsConnectionRequired;
+        const CONNECTION_REQUIRED = SCNetworkReachabilityFlags::ConnectionRequired.0;
         /// The specified node name or address can be reached using the current network
         /// configuration, but a connection must first be established. Any traffic directed to the
         /// specified name or address will initiate the connection.
-        const CONNECTION_ON_TRAFFIC = kSCNetworkReachabilityFlagsConnectionOnTraffic;
+        const CONNECTION_ON_TRAFFIC = SCNetworkReachabilityFlags::ConnectionOnTraffic.0;
         /// The specified node name or address can be reached using the current network
         /// configuration, but a connection must first be established.
-        const INTERVENTION_REQUIRED = kSCNetworkReachabilityFlagsInterventionRequired;
+        const INTERVENTION_REQUIRED = SCNetworkReachabilityFlags::InterventionRequired.0;
         /// The specified node name or address can be reached using the current network
         /// configuration, but a connection must first be established.
-        const CONNECTION_ON_DEMAND = kSCNetworkReachabilityFlagsConnectionOnDemand;
+        const CONNECTION_ON_DEMAND = SCNetworkReachabilityFlags::ConnectionOnDemand.0;
         /// The specified node name or address is one that is associated with a network interface on the current system.
-        const IS_LOCAL_ADDRESS = kSCNetworkReachabilityFlagsIsLocalAddress;
+        const IS_LOCAL_ADDRESS = SCNetworkReachabilityFlags::IsLocalAddress.0;
         /// Network traffic to the specified node name or address will not go through a gateway, but
         /// is routed directly to one of the interfaces in the system.
-        const IS_DIRECT = kSCNetworkReachabilityFlagsIsDirect;
+        const IS_DIRECT = SCNetworkReachabilityFlags::IsDirect.0;
         /// The specified node name or address can be reached via a cellular connection, such as EDGE or GPRS.
-        const IS_WWAN = kSCNetworkReachabilityFlagsIsWWAN;
+        const IS_WWAN = SCNetworkReachabilityFlags::IsWWAN.0;
     }
 }
 
-core_foundation::declare_TCFType!(
-    /// A network address or host for which the connectivity can be determined.
-    ///
-    /// See [`SCNetworkReachability`]  for details.
-    ///
-    /// [`SCNetworkReachability`]: https://developer.apple.com/documentation/systemconfiguration/scnetworkreachability-g7d
-    SCNetworkReachability,
-    SCNetworkReachabilityRef
-);
-
-core_foundation::impl_TCFType!(
-    SCNetworkReachability,
-    SCNetworkReachabilityRef,
-    SCNetworkReachabilityGetTypeID
-);
+/// A network address or host for which the connectivity can be determined.
+///
+/// See [`SCNetworkReachability`]  for details.
+///
+/// [`SCNetworkReachability`]: https://developer.apple.com/documentation/systemconfiguration/scnetworkreachability-g7d
+#[derive(Clone, PartialEq, Eq, Hash, Debug)]
+pub struct SCNetworkReachability(pub CFRetained<sys::SCNetworkReachability>);
 
 impl SCNetworkReachability {
     /// Construct a SCNetworkReachability struct with a local and a remote socket address.
@@ -155,15 +129,14 @@ impl SCNetworkReachability {
     ///
     /// [`SCNetworkReachabilityCreateWithAddressPair`]: https://developer.apple.com/documentation/systemconfiguration/1514908-scnetworkreachabilitycreatewitha?language=objc
     pub fn from_addr_pair(local: SocketAddr, remote: SocketAddr) -> SCNetworkReachability {
-        let ptr = unsafe {
-            SCNetworkReachabilityCreateWithAddressPair(
-                std::ptr::null(),
+        let res = unsafe {
+            sys::SCNetworkReachability::with_address_pair(
+                None,
                 &*to_c_sockaddr(local),
                 &*to_c_sockaddr(remote),
             )
         };
-
-        unsafe { Self::wrap_under_create_rule(ptr) }
+        Self(res.unwrap_or_else(|| panic!("Failed to construct a SCNetworkReachability struct with address pair {local} - {remote}")))
     }
 
     /// Construct a Reachability from either a hostname or a network node
@@ -172,12 +145,8 @@ impl SCNetworkReachability {
     ///
     /// [`SCNetworkReachabilityCreateWithName`]: https://developer.apple.com/documentation/systemconfiguration/1514904-scnetworkreachabilitycreatewithn?language=objc
     pub fn from_host(host: &CStr) -> Option<Self> {
-        let ptr = unsafe { SCNetworkReachabilityCreateWithName(ptr::null(), host.as_ptr()) };
-        if ptr.is_null() {
-            None
-        } else {
-            unsafe { Some(Self::wrap_under_create_rule(ptr)) }
-        }
+        let host = NonNull::new(host.as_ptr().cast_mut()).unwrap();
+        unsafe { sys::SCNetworkReachability::with_name(None, host) }.map(Self)
     }
 
     /// Return a flag indicating whether the specified network address is reachable.
@@ -186,13 +155,13 @@ impl SCNetworkReachability {
     ///
     /// [`SCNetworkReachabilityGetFlags`]: https://developer.apple.com/documentation/systemconfiguration/1514924-scnetworkreachabilitygetflags?language=objc
     pub fn reachability(&self) -> Result<ReachabilityFlags, ReachabilityError> {
-        let mut raw_flags = 0u32;
-        if unsafe { SCNetworkReachabilityGetFlags(self.0, &mut raw_flags) } == 0u8 {
+        let mut raw_flags = SCNetworkReachabilityFlags::empty();
+        if !unsafe { self.0.flags(NonNull::from(&mut raw_flags)) } {
             return Err(ReachabilityError::FailedToDetermineReachability);
         }
 
-        ReachabilityFlags::from_bits(raw_flags)
-            .ok_or(ReachabilityError::UnrecognizedFlags(raw_flags))
+        ReachabilityFlags::from_bits(raw_flags.0)
+            .ok_or(ReachabilityError::UnrecognizedFlags(raw_flags.0))
     }
 
     /// Schedule callback with runloop.
@@ -208,14 +177,9 @@ impl SCNetworkReachability {
     pub unsafe fn schedule_with_runloop(
         &self,
         run_loop: &CFRunLoop,
-        run_loop_mode: CFStringRef,
+        run_loop_mode: &CFRunLoopMode,
     ) -> Result<(), SchedulingError> {
-        if SCNetworkReachabilityScheduleWithRunLoop(
-            self.0,
-            run_loop.to_void() as *mut _,
-            run_loop_mode,
-        ) == 0u8
-        {
+        if !self.0.schedule_with_run_loop(run_loop, run_loop_mode) {
             Err(SchedulingError(()))
         } else {
             Ok(())
@@ -235,14 +199,9 @@ impl SCNetworkReachability {
     pub unsafe fn unschedule_from_runloop(
         &self,
         run_loop: &CFRunLoop,
-        run_loop_mode: CFStringRef,
+        run_loop_mode: &CFRunLoopMode,
     ) -> Result<(), UnschedulingError> {
-        if SCNetworkReachabilityUnscheduleFromRunLoop(
-            self.0,
-            run_loop.to_void() as *mut _,
-            run_loop_mode,
-        ) == 0u8
-        {
+        if !self.0.unschedule_from_run_loop(run_loop, run_loop_mode) {
             Err(UnschedulingError(()))
         } else {
             Ok(())
@@ -270,12 +229,11 @@ impl SCNetworkReachability {
             info: Arc::into_raw(callback) as *mut _,
             retain: Some(NetworkReachabilityCallbackContext::<F>::retain_context),
             release: Some(NetworkReachabilityCallbackContext::<F>::release_context),
-            copyDescription: Some(NetworkReachabilityCallbackContext::<F>::copy_ctx_description),
+            copyDescription: Some(NetworkReachabilityCallbackContext::<F>::copy_description),
         };
 
-        let result = unsafe {
-            SCNetworkReachabilitySetCallback(
-                self.0,
+        let success = unsafe {
+            self.0.set_callback(
                 Some(NetworkReachabilityCallbackContext::<F>::callback),
                 &mut callback_context,
             )
@@ -292,7 +250,7 @@ impl SCNetworkReachability {
         // Assumes the pointer pointed to by the `info` member of `callback_context` is still valid.
         unsafe { Arc::decrement_strong_count(callback_context.info) };
 
-        if result == 0u8 {
+        if !success {
             Err(SetCallbackError {})
         } else {
             Ok(())
@@ -302,11 +260,12 @@ impl SCNetworkReachability {
 
 impl From<SocketAddr> for SCNetworkReachability {
     fn from(addr: SocketAddr) -> Self {
-        unsafe {
-            let ptr =
-                SCNetworkReachabilityCreateWithAddress(std::ptr::null(), &*to_c_sockaddr(addr));
-            SCNetworkReachability::wrap_under_create_rule(ptr)
-        }
+        let res = unsafe {
+            sys::SCNetworkReachability::with_address(None, NonNull::from(&*to_c_sockaddr(addr)))
+        };
+        Self(res.unwrap_or_else(|| {
+            panic!("Failed to construct a SCNetworkReachability struct with {addr}")
+        }))
     }
 }
 
@@ -323,33 +282,31 @@ impl<T: Fn(ReachabilityFlags) + Sync + Send> NetworkReachabilityCallbackContext<
         }
     }
 
-    extern "C" fn callback(
-        _target: SCNetworkReachabilityRef,
+    extern "C-unwind" fn callback(
+        _target: NonNull<sys::SCNetworkReachability>,
         flags: SCNetworkReachabilityFlags,
         context: *mut c_void,
     ) {
         let context: &mut Self = unsafe { &mut (*(context as *mut _)) };
-        (context.callback)(ReachabilityFlags::from_bits_retain(flags));
+        (context.callback)(ReachabilityFlags::from_bits_retain(flags.0));
     }
 
-    extern "C" fn copy_ctx_description(_ctx: *const c_void) -> CFStringRef {
-        let description = CFString::from_static_string("NetworkRechability's callback context");
-        let description_ref = description.as_concrete_TypeRef();
-        std::mem::forget(description);
-        description_ref
+    extern "C-unwind" fn copy_description(_info: NonNull<c_void>) -> NonNull<CFString> {
+        let description = CFString::from_static_str("NetworkRechability's callback context");
+        NonNull::new(CFRetained::autorelease_ptr(description)).unwrap()
     }
 
-    extern "C" fn release_context(ctx: *const c_void) {
+    extern "C-unwind" fn release_context(info: NonNull<c_void>) {
         unsafe {
-            Arc::decrement_strong_count(ctx as *mut Self);
+            Arc::decrement_strong_count(info.cast::<Self>().as_ptr());
         }
     }
 
-    extern "C" fn retain_context(ctx_ptr: *const c_void) -> *const c_void {
+    extern "C-unwind" fn retain_context(info: NonNull<c_void>) -> NonNull<c_void> {
         unsafe {
-            Arc::increment_strong_count(ctx_ptr as *mut Self);
+            Arc::increment_strong_count(info.cast::<Self>().as_ptr());
         }
-        ctx_ptr
+        info
     }
 }
 
@@ -396,7 +353,7 @@ fn to_c_sockaddr(addr: SocketAddr) -> Box<libc::sockaddr> {
 mod test {
     use super::*;
 
-    use core_foundation::runloop::{kCFRunLoopCommonModes, CFRunLoop};
+    use objc2_core_foundation::{kCFRunLoopCommonModes, CFRunLoop};
     use std::{
         ffi::CString,
         net::{Ipv4Addr, Ipv6Addr},
@@ -411,19 +368,20 @@ mod test {
 
         for addr in sockaddrs {
             let mut reachability = SCNetworkReachability::from(addr);
-            assert!(
-                !reachability.0.is_null(),
-                "Failed to construct a SCNetworkReachability struct with {}",
-                addr
-            );
             reachability.set_callback(|_| {}).unwrap();
             // SAFETY: We use the Apple provided run_loop_mode kCFRunLoopCommonModes
             unsafe {
                 reachability
-                    .schedule_with_runloop(&CFRunLoop::get_current(), kCFRunLoopCommonModes)
+                    .schedule_with_runloop(
+                        &CFRunLoop::current().unwrap(),
+                        kCFRunLoopCommonModes.unwrap(),
+                    )
                     .unwrap();
                 reachability
-                    .unschedule_from_runloop(&CFRunLoop::get_current(), kCFRunLoopCommonModes)
+                    .unschedule_from_runloop(
+                        &CFRunLoop::current().unwrap(),
+                        kCFRunLoopCommonModes.unwrap(),
+                    )
                     .unwrap();
             }
         }
@@ -442,20 +400,20 @@ mod test {
 
         for (local, remote) in pairs {
             let mut reachability = SCNetworkReachability::from_addr_pair(local, remote);
-            assert!(
-                !reachability.0.is_null(),
-                "Failed to construct a SCNetworkReachability struct with address pair {} - {}",
-                local,
-                remote
-            );
             reachability.set_callback(|_| {}).unwrap();
             // SAFETY: We use the Apple provided run_loop_mode kCFRunLoopCommonModes
             unsafe {
                 reachability
-                    .schedule_with_runloop(&CFRunLoop::get_current(), kCFRunLoopCommonModes)
+                    .schedule_with_runloop(
+                        &CFRunLoop::current().unwrap(),
+                        kCFRunLoopCommonModes.unwrap(),
+                    )
                     .unwrap();
                 reachability
-                    .unschedule_from_runloop(&CFRunLoop::get_current(), kCFRunLoopCommonModes)
+                    .unschedule_from_runloop(
+                        &CFRunLoop::current().unwrap(),
+                        kCFRunLoopCommonModes.unwrap(),
+                    )
                     .unwrap();
             }
         }
@@ -506,12 +464,15 @@ mod test {
                     // SAFETY: We use the Apple provided run_loop_mode kCFRunLoopCommonModes
                     unsafe {
                         reachability
-                            .schedule_with_runloop(&CFRunLoop::get_current(), kCFRunLoopCommonModes)
+                            .schedule_with_runloop(
+                                &CFRunLoop::current().unwrap(),
+                                kCFRunLoopCommonModes.unwrap(),
+                            )
                             .unwrap();
                         reachability
                             .unschedule_from_runloop(
-                                &CFRunLoop::get_current(),
-                                kCFRunLoopCommonModes,
+                                &CFRunLoop::current().unwrap(),
+                                kCFRunLoopCommonModes.unwrap(),
                             )
                             .unwrap();
                     }
@@ -544,12 +505,15 @@ mod test {
             // SAFETY: We use the Apple provided run_loop_mode kCFRunLoopCommonModes
             unsafe {
                 reachability
-                    .schedule_with_runloop(&CFRunLoop::get_current(), kCFRunLoopCommonModes)
+                    .schedule_with_runloop(
+                        &CFRunLoop::current().unwrap(),
+                        kCFRunLoopCommonModes.unwrap(),
+                    )
                     .unwrap();
             }
             reachability.set_callback(|_| {}).unwrap();
             let _ = tx.send(reachability);
-            CFRunLoop::run_current();
+            CFRunLoop::run();
         });
         let mut reachability = rx.recv().unwrap();
         std::thread::sleep(std::time::Duration::from_secs(1));

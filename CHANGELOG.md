@@ -28,6 +28,11 @@ Line wrap the file at 100 chars.                                              Th
 ### Added
 - Added `std::error::Error` implementation for `ReachabilityError`.
 
+### Changed
+- Bump minimum supported Rust version (MSRV) to 1.71.0.
+- Breaking: Use `objc2-system-configuration` instead of `system-configuration-sys`.
+- Breaking: Use `objc2-core-foundation` instead of `core-foundation`.
+
 ### Fixed
 - Handle errors that may occur when creating runloop sources or an `SCDynamicStore`.
 

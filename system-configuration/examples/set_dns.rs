@@ -1,13 +1,8 @@
-use core_foundation::{
-    array::CFArray,
-    base::{TCFType, ToVoid},
-    dictionary::CFDictionary,
-    propertylist::CFPropertyList,
-    string::{CFString, CFStringRef},
-};
+use objc2_core_foundation::{CFRetained, CFType};
 use system_configuration::{
+    core_foundation::{CFArray, CFDictionary, CFString},
     dynamic_store::{SCDynamicStore, SCDynamicStoreBuilder},
-    sys::schema_definitions::{kSCDynamicStorePropNetPrimaryService, kSCPropNetDNSServerAddresses},
+    sys::{kSCDynamicStorePropNetPrimaryService, kSCPropNetDNSServerAddresses},
 };
 
 // This example will change the DNS settings on the primary
@@ -20,33 +15,35 @@ fn main() {
     let primary_service_uuid = get_primary_service_uuid(&store).expect("No PrimaryService active");
     println!("PrimaryService UUID: {}", primary_service_uuid);
 
-    let primary_service_path = CFString::new(&format!(
+    let primary_service_path = CFString::from_str(&format!(
         "State:/Network/Service/{}/DNS",
         primary_service_uuid
     ));
     println!("PrimaryService path: {}", primary_service_path);
 
     let dns_dictionary = create_dns_dictionary(&[
-        CFString::from_static_string("8.8.8.8"),
-        CFString::from_static_string("8.8.4.4"),
+        &*CFString::from_static_str("8.8.8.8"),
+        &*CFString::from_static_str("8.8.4.4"),
     ]);
 
-    let success = store.set(primary_service_path, dns_dictionary);
+    let success = store.set(&primary_service_path, &dns_dictionary);
     println!("success? {}", success);
 }
 
-fn get_primary_service_uuid(store: &SCDynamicStore) -> Option<CFString> {
+fn get_primary_service_uuid(store: &SCDynamicStore) -> Option<CFRetained<CFString>> {
     let dictionary = store
         .get("State:/Network/Global/IPv4")
-        .and_then(CFPropertyList::downcast_into::<CFDictionary>)?;
+        .and_then(|ty| CFRetained::downcast::<CFDictionary>(ty).ok())?;
+    let dictionary = unsafe { dictionary.cast_unchecked::<CFString, CFType>() };
     dictionary
-        .find(unsafe { kSCDynamicStorePropNetPrimaryService }.to_void())
-        .map(|ptr| unsafe { CFString::wrap_under_get_rule(*ptr as CFStringRef) })
+        .get(unsafe { kSCDynamicStorePropNetPrimaryService })
+        .and_then(|ty| CFRetained::downcast::<CFString>(ty).ok())
 }
 
-fn create_dns_dictionary(addresses: &[CFString]) -> CFDictionary {
-    let key = unsafe { CFString::wrap_under_get_rule(kSCPropNetDNSServerAddresses) };
-    let value = CFArray::from_CFTypes(addresses);
-    let typed_dict = CFDictionary::from_CFType_pairs(&[(key, value)]);
-    unsafe { CFDictionary::wrap_under_get_rule(typed_dict.as_concrete_TypeRef()) }
+fn create_dns_dictionary(
+    addresses: &[&CFString],
+) -> CFRetained<CFDictionary<CFString, CFArray<CFString>>> {
+    let key = unsafe { kSCPropNetDNSServerAddresses };
+    let value = CFArray::from_objects(addresses);
+    CFDictionary::from_slices(&[key], &[&*value])
 }

@@ -9,9 +9,31 @@ repository = "https://github.com/mullvad/system-configuration-rs"
 license = "MIT OR Apache-2.0"
 readme = "../README.md"
 edition = "2021"
-rust-version = "1.64.0"
+rust-version = "1.71.0"
 
 [dependencies]
-core-foundation = "0.9"
-system-configuration-sys = { path = "../system-configuration-sys", version = "0.6" }
-bitflags = "2"
+objc2-core-foundation = { version = "0.3.2", default-features = false, features = [
+    "std",
+    "CFArray",
+    "CFData",
+    "CFDictionary",
+    "CFNumber",
+    "CFRunLoop",
+    "CFString",
+] }
+objc2-system-configuration = { version = "0.3.2", default-features = false, features = [
+    "std",
+    "libc",
+    "SCDynamicStore",
+    "SCDynamicStoreCopySpecific",
+    "SCNetworkConfiguration",
+    "SCNetworkReachability",
+    "SCPreferences",
+] }
+bitflags = "2.9.4"
+libc = "0.2.149"
+
+[dev-dependencies]
+objc2-system-configuration = { version = "0.3.2", default-features = false, features = [
+    "SCSchemaDefinitions",
+] }
