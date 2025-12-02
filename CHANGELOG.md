@@ -23,6 +23,8 @@ Line wrap the file at 100 chars.                                              Th
 
 ## [Unreleased]
 
+
+## [0.7.0] - 2025-12-02
 ### Added
 - Added `std::error::Error` implementation for `ReachabilityError`.
 
