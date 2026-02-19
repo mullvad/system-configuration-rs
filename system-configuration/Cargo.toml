@@ -12,6 +12,6 @@ edition = "2021"
 rust-version = "1.64.0"
 
 [dependencies]
-core-foundation = "0.9"
+core-foundation = "0.10"
 system-configuration-sys = { path = "../system-configuration-sys", version = "0.6" }
 bitflags = "2"

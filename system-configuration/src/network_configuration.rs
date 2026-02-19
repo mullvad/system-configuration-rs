@@ -150,8 +150,10 @@ impl SCNetworkInterfaceType {
         use system_configuration_sys::network_configuration::*;
 
         let id_is_equal_to = |const_str| -> bool {
-            let const_str = unsafe { CFString::wrap_under_get_rule(const_str) };
-            &const_str == type_id
+            match unsafe { CFString::try_wrap_under_get_rule(const_str) } {
+                Some(const_str) => &const_str == type_id,
+                None => false,
+            }
         };
         unsafe {
             if id_is_equal_to(kSCNetworkInterfaceType6to4) {
@@ -200,8 +202,8 @@ impl SCNetworkInterfaceType {
 /// See [`SCNetworkInterfaceCopyAll`] for more details.
 ///
 /// [`SCNetworkInterfaceCopyAll`]: https://developer.apple.com/documentation/systemconfiguration/1517090-scnetworkinterfacecopyall?language=objc
-pub fn get_interfaces() -> CFArray<SCNetworkInterface> {
-    unsafe { CFArray::<SCNetworkInterface>::wrap_under_create_rule(SCNetworkInterfaceCopyAll()) }
+pub fn get_interfaces() -> Option<CFArray<SCNetworkInterface>> {
+    unsafe { CFArray::<SCNetworkInterface>::try_wrap_under_create_rule(SCNetworkInterfaceCopyAll()) }
 }
 
 core_foundation::declare_TCFType!(
@@ -277,9 +279,9 @@ core_foundation::impl_TCFType!(SCNetworkSet, SCNetworkSetRef, SCNetworkSetGetTyp
 
 impl SCNetworkSet {
     /// Constructs a new set of network services from the preferences.
-    pub fn new(prefs: &SCPreferences) -> Self {
+    pub fn new(prefs: &SCPreferences) -> Option<Self> {
         let ptr = unsafe { SCNetworkSetCopyCurrent(prefs.to_void()) };
-        unsafe { SCNetworkSet::wrap_under_create_rule(ptr) }
+        unsafe { SCNetworkSet::try_wrap_under_create_rule(ptr) }
     }
 
     /// Returns an list of network service identifiers, ordered by their priority.
@@ -312,12 +314,12 @@ mod test {
 
     #[test]
     fn test_get_all_interfaces() {
-        let _ = get_interfaces();
+        let _ = get_interfaces().unwrap();
     }
 
     #[test]
     fn test_get_type() {
-        for iface in get_interfaces().into_iter() {
+        for iface in get_interfaces().unwrap().into_iter() {
             if iface.interface_type().is_none() {
                 panic!(
                     "Interface  {:?} ({:?}) has unrecognized type {:?}",
@@ -331,9 +333,9 @@ mod test {
 
     #[test]
     fn test_service_order() {
-        let prefs = SCPreferences::default(&CFString::new("test"));
+        let prefs = SCPreferences::default(&CFString::new("test")).unwrap();
         let services = SCNetworkService::get_services(&prefs);
-        let set = SCNetworkSet::new(&prefs);
+        let set = SCNetworkSet::new(&prefs).unwrap();
         let service_order = set.service_order();
 
         assert!(service_order.iter().all(|service_id| {

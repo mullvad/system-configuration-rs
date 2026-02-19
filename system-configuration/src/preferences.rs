@@ -26,7 +26,7 @@ impl_TCFType!(SCPreferences, SCPreferencesRef, SCPreferencesGetTypeID);
 
 impl SCPreferences {
     /// Initiates access to the default system preferences using the default allocator.
-    pub fn default(calling_process_name: &CFString) -> Self {
+    pub fn default(calling_process_name: &CFString) -> Option<Self> {
         Self::new(None, calling_process_name, None)
     }
 
@@ -35,7 +35,7 @@ impl SCPreferences {
     /// constructor.
     ///
     /// [`default`]: #method.default
-    pub fn group(calling_process_name: &CFString, prefs_id: &CFString) -> Self {
+    pub fn group(calling_process_name: &CFString, prefs_id: &CFString) -> Option<Self> {
         Self::new(None, calling_process_name, Some(prefs_id))
     }
 
@@ -51,7 +51,7 @@ impl SCPreferences {
         allocator: Option<&CFAllocator>,
         calling_process_name: &CFString,
         prefs_id: Option<&CFString>,
-    ) -> Self {
+    ) -> Option<Self> {
         let allocator_ref = match allocator {
             Some(allocator) => allocator.as_concrete_TypeRef(),
             None => ptr::null(),
@@ -62,7 +62,7 @@ impl SCPreferences {
         };
 
         unsafe {
-            SCPreferences::wrap_under_create_rule(SCPreferencesCreate(
+            SCPreferences::try_wrap_under_create_rule(SCPreferencesCreate(
                 allocator_ref,
                 calling_process_name.as_concrete_TypeRef(),
                 prefs_id_ref,
@@ -77,7 +77,7 @@ mod tests {
 
     #[test]
     fn retain_count() {
-        let preferences = SCPreferences::default(&CFString::new("test"));
+        let preferences = SCPreferences::default(&CFString::new("test")).unwrap();
         assert_eq!(preferences.retain_count(), 1);
     }
 }
