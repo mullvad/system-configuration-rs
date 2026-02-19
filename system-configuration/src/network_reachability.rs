@@ -154,7 +154,10 @@ impl SCNetworkReachability {
     /// See [`SCNetworkReachabilityCreateWithAddressPair`] for details.
     ///
     /// [`SCNetworkReachabilityCreateWithAddressPair`]: https://developer.apple.com/documentation/systemconfiguration/1514908-scnetworkreachabilitycreatewitha?language=objc
-    pub fn from_addr_pair(local: SocketAddr, remote: SocketAddr) -> SCNetworkReachability {
+    pub fn from_addr_pair(
+        local: SocketAddr,
+        remote: SocketAddr,
+    ) -> Option<SCNetworkReachability> {
         let ptr = unsafe {
             SCNetworkReachabilityCreateWithAddressPair(
                 std::ptr::null(),
@@ -163,7 +166,7 @@ impl SCNetworkReachability {
             )
         };
 
-        unsafe { Self::wrap_under_create_rule(ptr) }
+        unsafe { Self::try_wrap_under_create_rule(ptr) }
     }
 
     /// Construct a Reachability from either a hostname or a network node
@@ -300,12 +303,30 @@ impl SCNetworkReachability {
     }
 }
 
-impl From<SocketAddr> for SCNetworkReachability {
-    fn from(addr: SocketAddr) -> Self {
+/// Failure to create a `SCNetworkReachability` from a network address.
+#[derive(Debug)]
+pub struct NetworkReachabilityCreateError(());
+
+impl Display for NetworkReachabilityCreateError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "Failed to create SCNetworkReachability from network address"
+        )
+    }
+}
+
+impl Error for NetworkReachabilityCreateError {}
+
+impl TryFrom<SocketAddr> for SCNetworkReachability {
+    type Error = NetworkReachabilityCreateError;
+
+    fn try_from(addr: SocketAddr) -> Result<Self, Self::Error> {
         unsafe {
             let ptr =
                 SCNetworkReachabilityCreateWithAddress(std::ptr::null(), &*to_c_sockaddr(addr));
-            SCNetworkReachability::wrap_under_create_rule(ptr)
+            SCNetworkReachability::try_wrap_under_create_rule(ptr)
+                .ok_or(NetworkReachabilityCreateError(()))
         }
     }
 }
@@ -410,7 +431,7 @@ mod test {
         ];
 
         for addr in sockaddrs {
-            let mut reachability = SCNetworkReachability::from(addr);
+            let mut reachability = SCNetworkReachability::try_from(addr).unwrap();
             assert!(
                 !reachability.0.is_null(),
                 "Failed to construct a SCNetworkReachability struct with {}",
@@ -441,7 +462,7 @@ mod test {
         .map(|(a, b)| (a.parse().unwrap(), b.parse().unwrap()));
 
         for (local, remote) in pairs {
-            let mut reachability = SCNetworkReachability::from_addr_pair(local, remote);
+            let mut reachability = SCNetworkReachability::from_addr_pair(local, remote).unwrap();
             assert!(
                 !reachability.0.is_null(),
                 "Failed to construct a SCNetworkReachability struct with address pair {} - {}",
@@ -476,7 +497,7 @@ mod test {
                         SocketAddr::new(Ipv6Addr::UNSPECIFIED.into(), 0)
                     };
                     let reachability =
-                        SCNetworkReachability::from_addr_pair(local_addr, remote_addr);
+                        SCNetworkReachability::from_addr_pair(local_addr, remote_addr).unwrap();
                     let reachability_flags = reachability.reachability().unwrap();
                     // Verify that not established tcp connection path is reported as not reachable.
                     assert!(!reachability_flags.contains(ReachabilityFlags::REACHABLE));
@@ -484,7 +505,7 @@ mod test {
                 Ok(tcp) => {
                     let local = tcp.local_addr().unwrap();
                     let remote = tcp.peer_addr().unwrap();
-                    let reachability = SCNetworkReachability::from_addr_pair(local, remote);
+                    let reachability = SCNetworkReachability::from_addr_pair(local, remote).unwrap();
                     let reachability_flags = reachability.reachability().unwrap();
                     // Verify established tcp connection path is reported as reachable.
                     assert!(reachability_flags.contains(ReachabilityFlags::REACHABLE));
@@ -539,7 +560,8 @@ mod test {
         let (tx, rx) = std::sync::mpsc::channel();
         std::thread::spawn(move || {
             let mut reachability =
-                SCNetworkReachability::from("0.0.0.0:0".parse::<SocketAddr>().unwrap());
+                SCNetworkReachability::try_from("0.0.0.0:0".parse::<SocketAddr>().unwrap())
+                    .unwrap();
             reachability.set_callback(|_| {}).unwrap();
             // SAFETY: We use the Apple provided run_loop_mode kCFRunLoopCommonModes
             unsafe {

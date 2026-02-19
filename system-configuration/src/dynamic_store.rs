@@ -103,7 +103,7 @@ impl<T> SCDynamicStoreBuilder<T> {
 
     /// Create the dynamic store session.
     pub fn build(mut self) -> Option<SCDynamicStore> {
-        let store_options = self.create_store_options();
+        let store_options = self.create_store_options()?;
         if let Some(callback_context) = self.callback_context.take() {
             SCDynamicStore::create(
                 &self.name,
@@ -116,11 +116,12 @@ impl<T> SCDynamicStoreBuilder<T> {
         }
     }
 
-    fn create_store_options(&self) -> CFDictionary {
-        let key = unsafe { CFString::wrap_under_create_rule(kSCDynamicStoreUseSessionKeys) };
+    fn create_store_options(&self) -> Option<CFDictionary> {
+        let key =
+            unsafe { CFString::try_wrap_under_create_rule(kSCDynamicStoreUseSessionKeys) }?;
         let value = CFBoolean::from(self.session_keys);
         let typed_dict = CFDictionary::from_CFType_pairs(&[(key, value)]);
-        unsafe { CFDictionary::wrap_under_get_rule(typed_dict.as_concrete_TypeRef()) }
+        unsafe { CFDictionary::try_wrap_under_get_rule(typed_dict.as_concrete_TypeRef()) }
     }
 
     fn create_context(
