@@ -24,6 +24,11 @@ Line wrap the file at 100 chars.                                              Th
 ## [Unreleased]
 
 
+## [0.8.0] - 2026-08-11
+### Changed
+- Bump `core-foundation` dependency to 0.10
+
+
 ## [0.7.0] - 2025-12-02
 ### Added
 - Added `std::error::Error` implementation for `ReachabilityError`.
