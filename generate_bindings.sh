@@ -9,24 +9,50 @@ SED=$(which gsed)
 
 export DYLD_LIBRARY_PATH=$(rustc +stable --print sysroot)/lib
 
+# ---------------- MacOS SDK ----------------
 SDK_VERSION=`xcodebuild -sdk macosx -version SDKVersion`
 SDK_PATH=`xcodebuild -sdk macosx -version Path`
-FRAMEWORK_PATH="$SDK_PATH/System/Library/Frameworks/"
+FRAMEWORK_PATH="${SDK_PATH}/System/Library/Frameworks/"
 
-PREFERENCES_HEADER_PATH="$FRAMEWORK_PATH/SystemConfiguration.framework/Headers/SCPreferences.h"
-DYNAMIC_STORE_HEADER_PATH="$FRAMEWORK_PATH/SystemConfiguration.framework/Headers/SCDynamicStore.h"
-DYNAMIC_STORE_COPY_SPECIFIC_HEADER_PATH="$FRAMEWORK_PATH/SystemConfiguration.framework/Headers/SCDynamicStoreCopySpecific.h"
-NETWORK_CONFIGURATION_HEADER_PATH="$FRAMEWORK_PATH/SystemConfiguration.framework/Headers/SCNetworkConfiguration.h"
-NETWORK_REACHABILITY_HEADER_PATH="$FRAMEWORK_PATH/SystemConfiguration.framework/Headers/SCNetworkReachability.h"
-SCHEMA_DEFINITIONS_HEADER_PATH="$FRAMEWORK_PATH/SystemConfiguration.framework/Headers/SCSchemaDefinitions.h"
+# ---------------- SystemConfiguration framework headers ----------------
+SC_HEADER_PATH="${FRAMEWORK_PATH}/SystemConfiguration.framework/Headers/"
 
-PREFERENCES_BINDING_PATH="./system-configuration-sys/src/preferences.rs"
-DYNAMIC_STORE_BINDING_PATH="./system-configuration-sys/src/dynamic_store.rs"
-DYNAMIC_STORE_COPY_SPECIFIC_BINDING_PATH="./system-configuration-sys/src/dynamic_store_copy_specific.rs"
-NETWORK_CONFIGURATION_BINDING_PATH="./system-configuration-sys/src/network_configuration.rs"
-NETWORK_REACHABILITY_BINDING_PATH="./system-configuration-sys/src/network_reachability.rs"
-SCHEMA_DEFINITIONS_BINDING_PATH="./system-configuration-sys/src/schema_definitions.rs"
+#CAPTIVE_NETWORK_HEADER_PATH="${SC_HEADER_PATH}/CaptiveNetwork.h"
+#DHCP_CLIENT_PREFERENCES_HEADER_PATH="${SC_HEADER_PATH}/DHCPClientPreferences.h"
+DYNAMIC_STORE_HEADER_PATH="${SC_HEADER_PATH}/SCDynamicStore.h"
+#DYNAMIC_STORE_COPY_DHCP_INFO_HEADER_PATH="${SC_HEADER_PATH}/SCDynamicStoreCopyDHCPInfo.h"
+DYNAMIC_STORE_COPY_SPECIFIC_HEADER_PATH="${SC_HEADER_PATH}/SCDynamicStoreCopySpecific.h"
+#DYNAMIC_STORE_KEY_HEADER_PATH="${SC_HEADER_PATH}/SCDynamicStoreKey.h"
+#NETWORK_HEADER_PATH="${SC_HEADER_PATH}/SCNetwork.h"
+NETWORK_CONFIGURATION_HEADER_PATH="${SC_HEADER_PATH}/SCNetworkConfiguration.h"
+#NETWORK_CONNECTION_HEADER_PATH="${SC_HEADER_PATH}/SCNetworkConnection.h"
+NETWORK_REACHABILITY_HEADER_PATH="${SC_HEADER_PATH}/SCNetworkReachability.h"
+PREFERENCES_HEADER_PATH="${SC_HEADER_PATH}/SCPreferences.h"
+#PREFERENCES_PATH_HEADER_PATH="${SC_HEADER_PATH}/SCPreferencesPath.h"
+#PREFERENCES_SET_SPECIFIC_HEADER_PATH="${SC_HEADER_PATH}/SCPreferencesSetSpecific.h"
+SCHEMA_DEFINITIONS_HEADER_PATH="${SC_HEADER_PATH}/SCSchemaDefinitions.h"
+SYSTEM_CONFIGURATION_HEADER_PATH="${SC_HEADER_PATH}/SystemConfiguration.h"
 
+# ---------------- SystemConfiguration framework bindings ----------------
+SC_BINDING_PATH="./system-configuration-sys/src/"
+
+#CAPTIVE_NETWORK_BINDING_PATH="${SC_BINDING_PATH}/captive_network.rs"
+#DHCP_CLIENT_PREFERENCES_BINDING_PATH="${SC_BINDING_PATH}/dhcp_client_preferences.rs"
+DYNAMIC_STORE_BINDING_PATH="${SC_BINDING_PATH}/dynamic_store.rs"
+#DYNAMIC_STORE_COPY_DHCP_INFO_BINDING_PATH="${SC_BINDING_PATH}/dynamic_store_copy_dhcp_info.rs"
+DYNAMIC_STORE_COPY_SPECIFIC_BINDING_PATH="${SC_BINDING_PATH}/dynamic_store_copy_specific.rs"
+#DYNAMIC_STORE_KEY_BINDING_PATH="${SC_BINDING_PATH}/dynamic_store_key.rs"
+#NETWORK_BINDING_PATH="${SC_BINDING_PATH}/network.rs"
+NETWORK_CONFIGURATION_BINDING_PATH="${SC_BINDING_PATH}/network_configuration.rs"
+#NETWORK_CONNECTION_BINDING_PATH="${SC_BINDING_PATH}/network_connection.rs"
+NETWORK_REACHABILITY_BINDING_PATH="${SC_BINDING_PATH}/network_reachability.rs"
+PREFERENCES_BINDING_PATH="${SC_BINDING_PATH}/preferences.rs"
+#PREFERENCES_PATH_BINDING_PATH="${SC_BINDING_PATH}/preferences_path.rs"
+#PREFERENCES_SET_SPECIFIC_BINDING_PATH="${SC_BINDING_PATH}/preferences_set_specific.rs"
+SCHEMA_DEFINITIONS_BINDING_PATH="${SC_BINDING_PATH}/schema_definitions.rs"
+SYSTEM_CONFIGURATION_BINDING_PATH="${SC_BINDING_PATH}/system_configuration.rs"
+
+# ---------------- Bindgen-related definitions ----------------
 BINDGEN_VERSION=`bindgen --version`
 
 echo "Using macOS SDK at: $SDK_PATH"
@@ -83,37 +109,8 @@ BINDGEN_COMMON_ARGUMENTS=(
     --raw-line ""
 )
 
-echo "Generating bindings for $PREFERENCES_HEADER_PATH"
-bindgen \
-    "${BINDGEN_COMMON_ARGUMENTS[@]}" \
-    --allowlist-function "SCPreferences.*" \
-    --blocklist-type "(__)?CF.*" \
-    --blocklist-type "Boolean" \
-    --blocklist-type "dispatch_queue_[ts]" \
-    --blocklist-type "(AuthorizationOpaqueRef|__SCPreferences)" \
-    --raw-line "use core::ffi::c_void;" \
-    --raw-line "use core_foundation_sys::array::CFArrayRef;" \
-    --raw-line "use core_foundation_sys::base::{Boolean, CFIndex, CFAllocatorRef, CFTypeID};" \
-    --raw-line "use core_foundation_sys::data::CFDataRef;" \
-    --raw-line "use core_foundation_sys::string::CFStringRef;" \
-    --raw-line "use core_foundation_sys::propertylist::CFPropertyListRef;" \
-    --raw-line "use core_foundation_sys::runloop::CFRunLoopRef;" \
-    --raw-line "" \
-    --raw-line "use crate::dispatch_queue_t;" \
-    --raw-line "" \
-    --raw-line "pub type AuthorizationOpaqueRef = c_void;" \
-    --raw-line "pub type __SCPreferences = c_void;" \
-    -o $PREFERENCES_BINDING_PATH \
-    $PREFERENCES_HEADER_PATH -- \
-    -I$SDK_PATH/usr/include \
-    -F$FRAMEWORK_PATH
-
-cleanup_binding $PREFERENCES_BINDING_PATH
-
-echo ""
-echo ""
+# ---------------- Bindgen: SCDynamicStore.h => dynamic_store.rs ----------------
 echo "Generating bindings for $DYNAMIC_STORE_HEADER_PATH"
-
 bindgen \
     "${BINDGEN_COMMON_ARGUMENTS[@]}" \
     --allowlist-function "SCDynamicStore.*" \
@@ -139,8 +136,9 @@ cleanup_binding $DYNAMIC_STORE_BINDING_PATH
 
 echo ""
 echo ""
-echo "Generating bindings for $DYNAMIC_STORE_COPY_SPECIFIC_HEADER_PATH"
 
+# ---------------- Bindgen: SCDynamicStoreCopySpecific.h => dynamic_store_copy_specific.rs ----------------
+echo "Generating bindings for $DYNAMIC_STORE_COPY_SPECIFIC_HEADER_PATH"
 bindgen \
     "${BINDGEN_COMMON_ARGUMENTS[@]}" \
     --allowlist-function "SCDynamicStoreCopy(ComputerName|ConsoleUser|LocalHostName|Location|Proxies)" \
@@ -160,8 +158,9 @@ cleanup_binding $DYNAMIC_STORE_COPY_SPECIFIC_BINDING_PATH
 
 echo ""
 echo ""
-echo "Generating bindings for $NETWORK_CONFIGURATION_HEADER_PATH"
 
+# ---------------- Bindgen: SCNetworkConfiguration.h => network_configuration.rs ----------------
+echo "Generating bindings for $NETWORK_CONFIGURATION_HEADER_PATH"
 bindgen \
     "${BINDGEN_COMMON_ARGUMENTS[@]}" \
     --allowlist-function "SCNetwork.*" \
@@ -201,8 +200,9 @@ cleanup_binding $NETWORK_CONFIGURATION_BINDING_PATH
 
 echo ""
 echo ""
-echo "Generating bindings for $NETWORK_REACHABILITY_HEADER_PATH"
 
+# ---------------- Bindgen: SCNetworkReachability.h => network_reachability.rs ----------------
+echo "Generating bindings for $NETWORK_REACHABILITY_HEADER_PATH"
 bindgen \
     "${BINDGEN_COMMON_ARGUMENTS[@]}" \
     --allowlist-function "SCNetworkReachability.*" \
@@ -229,11 +229,42 @@ bindgen \
 
 cleanup_binding $NETWORK_REACHABILITY_BINDING_PATH
 
+echo ""
+echo ""
+
+# ---------------- Bindgen: SCPreferences.h => preferences.rs ----------------
+echo "Generating bindings for $PREFERENCES_HEADER_PATH"
+bindgen \
+    "${BINDGEN_COMMON_ARGUMENTS[@]}" \
+    --allowlist-function "SCPreferences.*" \
+    --blocklist-type "(__)?CF.*" \
+    --blocklist-type "Boolean" \
+    --blocklist-type "dispatch_queue_[ts]" \
+    --blocklist-type "(AuthorizationOpaqueRef|__SCPreferences)" \
+    --raw-line "use core::ffi::c_void;" \
+    --raw-line "use core_foundation_sys::array::CFArrayRef;" \
+    --raw-line "use core_foundation_sys::base::{Boolean, CFIndex, CFAllocatorRef, CFTypeID};" \
+    --raw-line "use core_foundation_sys::data::CFDataRef;" \
+    --raw-line "use core_foundation_sys::string::CFStringRef;" \
+    --raw-line "use core_foundation_sys::propertylist::CFPropertyListRef;" \
+    --raw-line "use core_foundation_sys::runloop::CFRunLoopRef;" \
+    --raw-line "" \
+    --raw-line "use crate::dispatch_queue_t;" \
+    --raw-line "" \
+    --raw-line "pub type AuthorizationOpaqueRef = c_void;" \
+    --raw-line "pub type __SCPreferences = c_void;" \
+    -o $PREFERENCES_BINDING_PATH \
+    $PREFERENCES_HEADER_PATH -- \
+    -I$SDK_PATH/usr/include \
+    -F$FRAMEWORK_PATH
+
+cleanup_binding $PREFERENCES_BINDING_PATH
 
 echo ""
 echo ""
+
+# ---------------- Bindgen: SCSchemaDefinitions.h => schema_definitions.rs ----------------
 echo "Generating bindings for $SCHEMA_DEFINITIONS_HEADER_PATH"
-
 bindgen \
     "${BINDGEN_COMMON_ARGUMENTS[@]}" \
     --allowlist-var "kSC.*" \
@@ -247,3 +278,24 @@ bindgen \
     -F$FRAMEWORK_PATH
 
 cleanup_binding $SCHEMA_DEFINITIONS_BINDING_PATH
+
+echo ""
+echo ""
+
+# ---------------- Bindgen: SystemConfiguration.h => system_configuration.rs ----------------
+echo "Generating bindings for $SYSTEM_CONFIGURATION_HEADER_PATH"
+bindgen \
+    "${BINDGEN_COMMON_ARGUMENTS[@]}" \
+    --allowlist-var "k(CFErrorDomainSystemConfiguration|SCStatus.*)" \
+    --allowlist-function "SC(CopyLastError|Error|ErrorString)" \
+    --blocklist-type "(__)?CF.*" \
+    --raw-line "use core_foundation_sys::error::CFErrorRef;" \
+    --raw-line "use core_foundation_sys::string::CFStringRef;" \
+    --raw-line "" \
+    -o $SYSTEM_CONFIGURATION_BINDING_PATH \
+    $SYSTEM_CONFIGURATION_HEADER_PATH -- \
+    -I$SDK_PATH/usr/include \
+    -F$FRAMEWORK_PATH
+
+cleanup_binding $SYSTEM_CONFIGURATION_BINDING_PATH
+

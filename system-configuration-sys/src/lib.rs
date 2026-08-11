@@ -29,3 +29,4 @@ pub mod network_configuration;
 pub mod network_reachability;
 pub mod preferences;
 pub mod schema_definitions;
+pub mod system_configuration;
